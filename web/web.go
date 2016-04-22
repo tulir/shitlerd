@@ -13,8 +13,20 @@
 
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
-package main
 
-func main() {
+// Package web contains the HTTP server
+package web
 
+import (
+	"github.com/gorilla/context"
+	"net/http"
+)
+
+// Load the web server
+func Load(addr string) {
+	http.HandleFunc("/socket/", serveWs)
+	err := http.ListenAndServe(addr, context.ClearHandler(http.DefaultServeMux))
+	if err != nil {
+		panic(err)
+	}
 }
