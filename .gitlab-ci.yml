@@ -1,0 +1,20 @@
+image: golang:1.6
+
+before_script:
+- "go get -u github.com/gorilla/context"
+- "go get -u github.com/gorilla/websocket"
+- "mkdir -p /go/src/maunium.net/go"
+- "ln -s /builds/Tulir293/shitlerd /go/src/maunium.net/go/shitlerd"
+
+build:
+    script:
+    - "env GOOS=linux GOARCH=amd64 go build -o shitlerd_amd64 maunium.net/go/shitlerd"
+    - "env GOOS=linux GOARCH=arm go build -o shitlerd_arm maunium.net/go/shitlerd"
+    stage: build
+    tags:
+    - golang
+    artifacts:
+        paths:
+        - shitlerd_amd64
+        - shitlerd_arm
+        - LICENSE
