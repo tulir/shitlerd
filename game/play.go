@@ -23,6 +23,9 @@ import (
 
 // Start the game already!
 func (game *Game) Start() {
+	if game.PlayerCount() < 5 {
+		return
+	}
 	game.Started = true
 
 	game.PresidentIndex = r.Intn(game.PlayerCount())
@@ -288,6 +291,8 @@ func (game *Game) ExecutedPlayer(name string) {
 
 func (game *Game) Error(msg string) {
 	game.Broadcast(Error{Type: TypeError, Message: msg})
+	game.Ended = true
+	Remove(game.Name)
 }
 
 // End the game with the given winner
@@ -297,4 +302,6 @@ func (game *Game) End(winner Card) {
 		end.Roles[player.Name] = player.Role
 	}
 	game.Broadcast(end)
+	game.Ended = true
+	Remove(game.Name)
 }

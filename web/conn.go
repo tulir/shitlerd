@@ -23,7 +23,6 @@ import (
 	"github.com/gorilla/websocket"
 	"maunium.net/go/shitlerd/game"
 	"net/http"
-	"strings"
 	"time"
 )
 
@@ -42,7 +41,11 @@ var upgrader = websocket.Upgrader{
 type connection struct {
 	ws *websocket.Conn
 	ch chan interface{}
-	p  game.Player
+	p  *game.Player
+}
+
+func (c *connection) SendMessage(msg interface{}) {
+	c.ch <- msg
 }
 
 func (c *connection) readPump() {
@@ -54,6 +57,7 @@ func (c *connection) readPump() {
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) {
 				fmt.Println("Unexpected close:", err)
+				c.p.Disconnect()
 			}
 			break
 		}
@@ -90,12 +94,14 @@ func (c *connection) writePump() {
 		case new, ok := <-c.ch:
 			if !ok {
 				c.write(websocket.CloseMessage, []byte{})
+				c.p.Disconnect()
 				return
 			}
 
 			err := c.writeJSON(new)
 			if err != nil {
 				fmt.Println("Disconnected:", err)
+				c.p.Disconnect()
 				return
 			}
 		case <-ticker.C:
@@ -108,28 +114,25 @@ func (c *connection) writePump() {
 }
 
 func serveWs(w http.ResponseWriter, r *http.Request) {
-	args := strings.Split(strings.Trim(r.RequestURI, "/"), "/")
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		fmt.Println("Failed to connect:", err)
 		return
 	}
-	c := &connection{ws: ws, user: user}
+
+	player, status := checkAuth(w, r)
+	if status != "success" {
+		w.Write([]byte(status))
+		w.WriteHeader(http.StatusUnauthorized)
+	}
+	c := &connection{ws: ws, p: player}
+	c.ch = make(chan interface{})
+	player.Connect(c)
 
 	c.ws.SetReadLimit(maxMessageSize)
 	c.ws.SetReadDeadline(time.Now().Add(pongWait))
 	c.ws.SetPongHandler(func(string) error { c.ws.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 
 	go c.writePump()
-
-	c.user.GetNetworks().ForEach(func(net mauircdi.Network) {
-		c.user.GetMessageChan() <- mauircdi.Message{Type: "netdata", Object: mauircdi.NetData{Name: net.GetName(), Connected: net.IsConnected()}}
-		net.GetActiveChannels().ForEach(func(chd mauircdi.ChannelData) {
-			c.user.GetMessageChan() <- mauircdi.Message{Type: "chandata", Object: chd}
-		})
-		c.user.GetMessageChan() <- mauircdi.Message{Type: "chanlist", Object: mauircdi.ChanList{Network: net.GetName(), List: net.GetAllChannels()}}
-		c.user.GetMessageChan() <- mauircdi.Message{Type: "nickchange", Object: mauircdi.NickChange{Network: net.GetName(), Nick: net.GetNick()}}
-	})
-
 	c.readPump()
 }

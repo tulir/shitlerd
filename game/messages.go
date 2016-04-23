@@ -29,6 +29,8 @@ const (
 	TypeChat              Type = "chat"
 	TypeJoin              Type = "join"
 	TypeQuit              Type = "quit"
+	TypeConnected         Type = "connected"
+	TypeDisconnected      Type = "disconnected"
 	TypeStart             Type = "start"
 	TypeEnd               Type = "end"
 	TypePresident         Type = "president"

@@ -28,10 +28,12 @@ var r = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 // Game contains a single Secret Hitler game
 type Game struct {
+	Name       string
 	Players    []*Player
 	Cards      Cards
 	Discarding []Card
 	Started    bool
+	Ended      bool
 
 	FailedGovs    int
 	VetoRequested bool
@@ -42,22 +44,26 @@ type Game struct {
 	Chancellor     *Player
 }
 
+// CreateGame creates a game with the default cards and max 10 players
+func CreateGame(name string) *Game {
+	return &Game{Name: RandomName(), Players: make([]*Player, 10), Cards: CreateDeck()}
+}
+
 // Join the given player
-func (game *Game) Join(name string, conn Connection) (int, string) {
+func (game *Game) Join(name string, conn Connection) (int, *Player) {
 	if game.Started {
-		return -3, ""
+		return -3, nil
 	}
 	for i, player := range game.Players {
 		if player == nil {
-			authtoken := game.createAuthToken()
-			game.Players[i] = &Player{Name: name, AuthToken: authtoken, Alive: true, Vote: VoteEmpty, Conn: conn, Game: game}
+			game.Players[i] = &Player{Name: name, AuthToken: game.createAuthToken(), Connected: false, Alive: true, Vote: VoteEmpty, Conn: conn, Game: game}
 			game.Broadcast(JoinQuit{Type: TypeJoin, Name: name})
-			return i, authtoken
+			return i, game.Players[i]
 		} else if player.Name == name {
-			return -2, ""
+			return -2, nil
 		}
 	}
-	return -1, ""
+	return -1, nil
 }
 
 // Leave the given player
@@ -74,6 +80,16 @@ func (game *Game) Leave(name string) {
 	}
 }
 
+// GetPlayer gets the given player in this game
+func (game *Game) GetPlayer(name string) *Player {
+	for _, player := range game.Players {
+		if player != nil && player.Name == name {
+			return player
+		}
+	}
+	return nil
+}
+
 func (game *Game) createAuthToken() string {
 	cs := make([]byte, 32)
 	_, err := crand.Read(cs)
@@ -84,14 +100,23 @@ func (game *Game) createAuthToken() string {
 }
 
 // PlayerCount gets the count of players in the game.
-func (game *Game) PlayerCount() int {
-	var i = 0
+func (game *Game) PlayerCount() (i int) {
 	for _, player := range game.Players {
 		if player != nil {
 			i++
 		}
 	}
-	return i
+	return
+}
+
+// ConnectedPlayers gets the amount of connected players
+func (game *Game) ConnectedPlayers() (i int) {
+	for _, player := range game.Players {
+		if player != nil && player.Connected {
+			i++
+		}
+	}
+	return
 }
 
 // Liberals returns the recommended amount of liberal players
@@ -122,11 +147,6 @@ func (game *Game) Facists() int {
 	return game.PlayerCount() - liberals - 1
 }
 
-// CreateGame creates a game with the default cards and max 10 players
-func CreateGame() *Game {
-	return &Game{Players: make([]*Player, 10), Cards: CreateDeck()}
-}
-
 // Broadcast a message to all players
 func (game *Game) Broadcast(msg interface{}) {
 	for _, player := range game.Players {
@@ -150,10 +170,24 @@ type Player struct {
 	Role      Role
 	Name      string
 	AuthToken string
+	Connected bool
 	Alive     bool
 	Vote      Vote
 	Conn      Connection
 	Game      *Game
+}
+
+// Connect is called when a player connects
+func (player *Player) Connect(conn Connection) {
+	player.Conn = conn
+	player.Connected = true
+	player.Game.Broadcast(JoinQuit{Type: TypeConnected, Name: player.Name})
+}
+
+// Disconnect is called when a player disconnects
+func (player *Player) Disconnect() {
+	player.Connected = false
+	player.Game.Broadcast(JoinQuit{Type: TypeDisconnected, Name: player.Name})
 }
 
 // ReceiveMessage should be called by the connection when the client sends a message
@@ -176,6 +210,8 @@ func (player *Player) ReceiveMessage(msg map[string]string) {
 		game.VetoRequest()
 	} else if msg["type"] == TypeVetoAccept.String() && game.President == player && game.VetoRequested {
 		game.VetoAccept()
+	} else if msg["type"] == TypeStart.String() && !game.Started && game.PlayerCount() >= 5 {
+		game.Start()
 	}
 }
 

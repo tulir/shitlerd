@@ -14,20 +14,34 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-// Package web contains the HTTP server
-package web
+// Package game contains the game management code
+package game
 
-import (
-	"github.com/gorilla/context"
-	"net/http"
-)
+var registry map[string]*Game
 
-// Load the web server
-func Load(addr string) {
-	http.HandleFunc("/socket", serveWs)
-	http.HandleFunc("/join/", join)
-	err := http.ListenAndServe(addr, context.ClearHandler(http.DefaultServeMux))
-	if err != nil {
-		panic(err)
+// Add creates a game and adds it to the registry
+func Add() string {
+	name := RandomName()
+	if game, ok := registry[name]; ok && game != nil && !game.Ended {
+		name = RandomName()
 	}
+	game := CreateGame(name)
+	registry[name] = game
+	return name
+}
+
+// Get the game with the given name from the registry
+func Get(name string) (*Game, bool) {
+	game, ok := registry[name]
+	return game, ok
+}
+
+// Remove a game from the registry
+func Remove(name string) bool {
+	_, ok := registry[name]
+	if !ok {
+		return false
+	}
+	registry[name] = nil
+	return true
 }
