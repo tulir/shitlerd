@@ -54,6 +54,7 @@ func (game *Game) Start() {
 			hitlerAvailable = false
 		}
 	}
+	game.NextPresident()
 }
 
 // NextPresident moves the game to the next president
@@ -69,11 +70,13 @@ func (game *Game) NextPresident() {
 		game.NextPresident()
 		return
 	}
+	game.State = ActSelectPresident
 	game.SetPresident(game.Players[game.PresidentIndex])
 }
 
 // SetPresident sets the new president
 func (game *Game) SetPresident(player *Player) {
+	game.State = ActPickChancellor
 	game.President = player
 	game.Broadcast(President{Type: TypePresident, Name: game.President.Name})
 }
@@ -83,6 +86,7 @@ func (game *Game) PickChancellor(name string) {
 	for _, player := range game.Players {
 		if player.Name == name {
 			game.Chancellor = player
+			game.State = ActVote
 			game.Broadcast(StartVote{Type: TypeStartVote, President: game.President.Name, Chancellor: game.Chancellor.Name})
 			return
 		}
@@ -122,9 +126,9 @@ func (game *Game) Vote(player *Player, vote string) {
 
 // ThreeGovsFailed is called when three consequent government attempts have been downvoted
 func (game *Game) ThreeGovsFailed() {
-	card := game.Cards.PickCards(1)[0]
+	card := game.Cards.PickCard()
 	game.Broadcast(EnactForce{Type: TypeEnactForce, Policy: card})
-	game.Enact(card)
+	game.Enact(card, true)
 }
 
 // StartDiscard is executed when everyone has voted and accepted the president
@@ -135,11 +139,12 @@ func (game *Game) StartDiscard() {
 			return
 		}
 	}
+	game.State = ActDiscardPresident
 
 	game.FailedGovs = 0
 	game.Broadcast(Discard{Type: TypePresidentDiscard, Name: game.President.Name})
 	game.BroadcastTable()
-	game.Discarding = game.Cards.PickCards(3)
+	game.Discarding = game.Cards.PickCards()
 	game.President.Conn.SendMessage(CardsMessage{Type: TypeCards, Cards: game.Discarding})
 }
 
@@ -163,9 +168,10 @@ func (game *Game) DiscardCard(c string) {
 	if len(game.Discarding) == 2 {
 		game.Broadcast(Discard{Type: TypeChancellorDiscard, Name: game.Chancellor.Name})
 		game.Chancellor.Conn.SendMessage(CardsMessage{Type: TypeCards, Cards: game.Discarding})
+		game.State = ActDiscardChancellor
 	} else if len(game.Discarding) == 1 {
 		game.Broadcast(Enact{Type: TypeEnact, President: game.President.Name, Chancellor: game.Chancellor.Name, Policy: game.Discarding[0]})
-		game.Enact(game.Discarding[0])
+		game.Enact(game.Discarding[0], false)
 	} else {
 		game.Error("Invalid amount of cards to discard")
 	}
@@ -202,7 +208,7 @@ func (game *Game) VetoAccept() {
 }
 
 // Enact is called when a card is enacted
-func (game *Game) Enact(card Card) {
+func (game *Game) Enact(card Card, force bool) {
 	switch card {
 	case CardFacist:
 		game.Cards.TableFacist++
@@ -218,20 +224,65 @@ func (game *Game) Enact(card Card) {
 		return
 	}
 
-	// TODO special actions
-	switch game.GetAction() {
-	case PolicyPeek:
+	if force || card == CardLiberal {
+		game.NextPresident()
+		return
+	}
+	act := game.GetSpecialAction()
+	switch act {
+	case ActPolicyPeek:
 		game.Broadcast(PresidentAction{Type: TypePeekBroadcast, President: game.President.Name})
 		game.President.Conn.SendMessage(CardsMessage{Type: TypePeek, Cards: game.Cards.Peek()})
 		game.NextPresident()
-	case InvestigatePlayer:
+	case ActInvestigatePlayer:
 		game.Broadcast(PresidentAction{Type: TypeInvestigate, President: game.President.Name})
-	case SelectPresident:
+	case ActSelectPresident:
 		game.Broadcast(PresidentAction{Type: TypePresidentSelect, President: game.President.Name})
-	case Execution:
+	case ActExecution:
 		game.Broadcast(PresidentAction{Type: TypeExecution, President: game.President.Name})
-	case Nothing:
+	case ActNothing:
 		game.NextPresident()
+		return
+	}
+	game.State = act
+}
+
+// Investigated is called when the president has investigated a player
+func (game *Game) Investigated(name string) {
+	for _, player := range game.Players {
+		if player.Name == name {
+			game.Broadcast(PresidentActionFinished{Type: TypeInvestigated, President: game.President.Name, Name: player.Name})
+			game.President.Conn.SendMessage(InvestigateResult{Type: TypeInvestigateResult, Name: player.Name, Result: player.Role.Card()})
+			game.NextPresident()
+			return
+		}
+	}
+}
+
+// SelectedPresident is called when the president selects the next president
+func (game *Game) SelectedPresident(name string) {
+	for _, player := range game.Players {
+		if player.Name == name {
+			game.Broadcast(PresidentActionFinished{Type: TypePresidentSelected, President: game.President.Name, Name: player.Name})
+			game.SetPresident(player)
+			return
+		}
+	}
+}
+
+// ExecutedPlayer is called when the president executes a player
+func (game *Game) ExecutedPlayer(name string) {
+	for _, player := range game.Players {
+		if player.Name == name {
+			game.Broadcast(PresidentActionFinished{Type: TypeExecuted, President: game.President.Name, Name: player.Name})
+			player.Alive = false
+			if player.Role == RoleHitler {
+				game.End(CardLiberal)
+			} else {
+				game.NextPresident()
+			}
+			return
+		}
 	}
 }
 

@@ -29,12 +29,14 @@ var r = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 // Game contains a single Secret Hitler game
 type Game struct {
-	Players       []*Player
-	Cards         Cards
-	Discarding    []Card
+	Players    []*Player
+	Cards      Cards
+	Discarding []Card
+	Started    bool
+
 	FailedGovs    int
 	VetoRequested bool
-	Started       bool
+	State         Action
 
 	PresidentIndex int
 	President      *Player
@@ -112,62 +114,66 @@ func (game *Game) Liberals() int {
 	return -1
 }
 
-// SpecialAction is a special action that happens when a number of facist policies have been enacted
-type SpecialAction int
+// Action is an action
+type Action int
 
-// All special actions
+// All actions
 const (
-	Nothing           SpecialAction = iota
-	PolicyPeek        SpecialAction = iota
-	InvestigatePlayer SpecialAction = iota
-	SelectPresident   SpecialAction = iota
-	Execution         SpecialAction = iota
+	ActNothing           Action = iota
+	ActPickChancellor    Action = iota
+	ActVote              Action = iota
+	ActDiscardPresident  Action = iota
+	ActDiscardChancellor Action = iota
+	ActPolicyPeek        Action = iota
+	ActInvestigatePlayer Action = iota
+	ActSelectPresident   Action = iota
+	ActExecution         Action = iota
 )
 
-// GetAction gets the action that should happen now.
-func (game *Game) GetAction() SpecialAction {
+// GetSpecialAction gets the special action that should happen now.
+func (game *Game) GetSpecialAction() Action {
 	switch game.PlayerCount() {
 	case 5:
 		fallthrough
 	case 6:
 		switch game.Cards.TableFacist {
 		case 3:
-			return PolicyPeek
+			return ActPolicyPeek
 		case 4:
-			return Execution
+			return ActExecution
 		case 5:
-			return Execution
+			return ActExecution
 		}
 	case 7:
 		fallthrough
 	case 8:
 		switch game.Cards.TableFacist {
 		case 2:
-			return InvestigatePlayer
+			return ActInvestigatePlayer
 		case 3:
-			return SelectPresident
+			return ActSelectPresident
 		case 4:
-			return Execution
+			return ActExecution
 		case 5:
-			return Execution
+			return ActExecution
 		}
 	case 9:
 		fallthrough
 	case 10:
 		switch game.Cards.TableFacist {
 		case 1:
-			return InvestigatePlayer
+			return ActInvestigatePlayer
 		case 2:
-			return InvestigatePlayer
+			return ActInvestigatePlayer
 		case 3:
-			return SelectPresident
+			return ActSelectPresident
 		case 4:
-			return Execution
+			return ActExecution
 		case 5:
-			return Execution
+			return ActExecution
 		}
 	}
-	return Nothing
+	return ActNothing
 }
 
 // Facists returns the recommended amount of facist players
@@ -225,6 +231,36 @@ const (
 // CreateDeck creates a Cards object with 6 liberal and 11 facist cards in the deck
 func CreateDeck() Cards {
 	return Cards{DeckLiberal: 6, DeckFacist: 11, DiscardedLiberal: 0, DiscardedFacist: 0, TableLiberal: 0, TableFacist: 0}
+}
+
+// PickCard picks one card from the deck
+func (cards Cards) PickCard() Card {
+	var picked Card
+	if cards.TableFacist == 0 && cards.TableLiberal == 0 {
+		cards.ResetDiscarded()
+	}
+	if cards.TableFacist == 0 {
+		picked = CardLiberal
+		cards.TableLiberal--
+	} else if cards.TableLiberal == 0 {
+		picked = CardFacist
+		cards.TableFacist--
+	} else {
+		if rand.Int()%2 == 0 {
+			picked = CardLiberal
+			cards.TableLiberal--
+		} else {
+			picked = CardFacist
+			cards.TableFacist--
+		}
+	}
+
+	if len(cards.PeekedCards) > 0 {
+		newPicked := cards.PeekedCards[0]
+		cards.PeekedCards[0] = picked
+		return newPicked
+	}
+	return picked
 }
 
 // PickCards picks `n` random cards from the deck
@@ -320,6 +356,9 @@ type Player struct {
 
 // ReceiveMessage should be called by the connection when the client sends a message
 func (player *Player) ReceiveMessage(msg map[string]string) {
+	if !player.Alive {
+		return
+	}
 	game := player.Game
 	if msg["type"] == TypeChat.String() {
 		game.Broadcast(Chat{Type: TypeChat, Sender: player.Name, Message: msg["message"]})
@@ -329,7 +368,7 @@ func (player *Player) ReceiveMessage(msg map[string]string) {
 		game.PickChancellor(msg["name"])
 	} else if msg["type"] == TypeDiscard.String() && (game.President == player || game.Chancellor == player) && len(game.Discarding) == 2 {
 		game.DiscardCard(msg["index"])
-	} else if msg["type"] == TypeVetoRequest.String() && game.Chancellor == player {
+	} else if msg["type"] == TypeVetoRequest.String() && game.Chancellor == player && game.Cards.TableFacist >= 5 {
 		game.VetoRequest()
 	} else if msg["type"] == TypeVetoAccept.String() && game.President == player && game.VetoRequested {
 		game.VetoAccept()
@@ -365,6 +404,18 @@ const (
 
 // Role is the role of a player
 type Role string
+
+// Card gets the card corresponding to the given role
+func (role Role) Card() Card {
+	switch role {
+	case RoleFacist:
+		fallthrough
+	case RoleHitler:
+		return CardFacist
+	default:
+		return CardLiberal
+	}
+}
 
 // The possible roles
 const (

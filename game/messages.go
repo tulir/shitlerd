@@ -48,8 +48,12 @@ const (
 	TypePeek              Type = "peekcards"
 	TypePeekBroadcast     Type = "peek"
 	TypeInvestigate       Type = "investigate"
+	TypeInvestigated      Type = "investigated"
+	TypeInvestigateResult Type = "investigateresult"
 	TypeExecution         Type = "execution"
 	TypePresidentSelect   Type = "presidentselect"
+	TypePresidentSelected Type = "presidentselected"
+	TypeExecuted          Type = "executed"
 )
 
 // Chat contains the necessary fields for a chat message
@@ -145,7 +149,22 @@ type Veto struct {
 	Chancellor string `json:"chancellor"`
 }
 
+// PresidentAction is broadcasted when the president must perform a special action.
 type PresidentAction struct {
 	Type      Type   `json:"type"`
 	President string `json:"president"`
+}
+
+// PresidentActionFinished is broadcasted when the president finishes an action
+type PresidentActionFinished struct {
+	Type      Type   `json:"type"`
+	President string `json:"president"`
+	Name      string `json:"name"`
+}
+
+// InvestigateResult is sent to the president when he/she has investigated someone
+type InvestigateResult struct {
+	Type   Type   `json:"type"`
+	Name   string `json:"name"`
+	Result Card   `json:"result"`
 }
