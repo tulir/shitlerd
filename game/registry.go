@@ -23,8 +23,8 @@ func init() {
 	registry = make(map[string]*Game)
 }
 
-// Add creates a game and adds it to the registry
-func Add() string {
+// New creates a game and adds it to the registry
+func New() string {
 	name := RandomName()
 	if game, ok := registry[name]; ok && game != nil && !game.Ended {
 		name = RandomName()
