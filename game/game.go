@@ -362,13 +362,15 @@ func (player *Player) ReceiveMessage(msg map[string]string) {
 	game := player.Game
 	if msg["type"] == TypeChat.String() {
 		game.Broadcast(Chat{Type: TypeChat, Sender: player.Name, Message: msg["message"]})
-	} else if msg["type"] == TypeVote.String() {
+	} else if msg["type"] == TypeVote.String() && game.State == ActVote {
 		game.Vote(player, msg["vote"])
-	} else if msg["type"] == TypePickChancellor.String() && game.President == player {
+	} else if msg["type"] == TypePickChancellor.String() && game.President == player && game.State == ActPickChancellor {
 		game.PickChancellor(msg["name"])
-	} else if msg["type"] == TypeDiscard.String() && (game.President == player || game.Chancellor == player) && len(game.Discarding) == 2 {
+	} else if msg["type"] == TypeDiscard.String() &&
+		((game.President == player && game.State == ActDiscardPresident) ||
+			(game.Chancellor == player && game.State == ActDiscardChancellor)) {
 		game.DiscardCard(msg["index"])
-	} else if msg["type"] == TypeVetoRequest.String() && game.Chancellor == player && game.Cards.TableFacist >= 5 {
+	} else if msg["type"] == TypeVetoRequest.String() && game.Chancellor == player && game.State == ActDiscardChancellor && game.Cards.TableFacist >= 5 {
 		game.VetoRequest()
 	} else if msg["type"] == TypeVetoAccept.String() && game.President == player && game.VetoRequested {
 		game.VetoAccept()
