@@ -210,6 +210,7 @@ type Cards struct {
 	DiscardedFacist  int
 	TableLiberal     int
 	TableFacist      int
+	PeekedCards      []Card
 }
 
 // Card is a single card (facist or liberal)
@@ -227,9 +228,23 @@ func CreateDeck() Cards {
 }
 
 // PickCards picks `n` random cards from the deck
-func (cards Cards) PickCards(n int) []Card {
-	picked := make([]Card, n)
-	for i := 0; i < n; i++ {
+func (cards Cards) PickCards() (picked []Card) {
+	if len(cards.PeekedCards) > 0 {
+		picked = make([]Card, 3)
+		for i, card := range cards.PeekedCards {
+			picked[i] = card
+			switch card {
+			case CardFacist:
+				cards.TableFacist--
+			case CardLiberal:
+				cards.TableLiberal--
+			}
+		}
+		cards.PeekedCards = []Card{}
+		return
+	}
+	picked = make([]Card, 3)
+	for i := 0; i < 3; i++ {
 		if cards.TableFacist == 0 && cards.TableLiberal == 0 {
 			cards.ResetDiscarded()
 		}
@@ -249,7 +264,29 @@ func (cards Cards) PickCards(n int) []Card {
 			}
 		}
 	}
-	return picked
+	return
+}
+
+// Peek peeks at the top three cards
+func (cards Cards) Peek() []Card {
+	cards.PeekedCards = make([]Card, 3)
+	for i := 0; i < 3; i++ {
+		if cards.TableFacist == 0 && cards.TableLiberal == 0 {
+			cards.ResetDiscarded()
+		}
+		if cards.TableFacist == 0 {
+			cards.PeekedCards[i] = CardLiberal
+		} else if cards.TableLiberal == 0 {
+			cards.PeekedCards[i] = CardFacist
+		} else {
+			if rand.Int()%2 == 0 {
+				cards.PeekedCards[i] = CardLiberal
+			} else {
+				cards.PeekedCards[i] = CardFacist
+			}
+		}
+	}
+	return cards.PeekedCards
 }
 
 // DeckSize returns the amount of cards in the deck

@@ -65,11 +65,16 @@ func (game *Game) NextPresident() {
 	if game.PresidentIndex >= 10 {
 		game.PresidentIndex = 0
 	}
-	game.President = game.Players[game.PresidentIndex]
-	if game.President == nil {
+	if game.Players[game.PresidentIndex] == nil {
 		game.NextPresident()
 		return
 	}
+	game.SetPresident(game.Players[game.PresidentIndex])
+}
+
+// SetPresident sets the new president
+func (game *Game) SetPresident(player *Player) {
+	game.President = player
 	game.Broadcast(President{Type: TypePresident, Name: game.President.Name})
 }
 
@@ -216,9 +221,15 @@ func (game *Game) Enact(card Card) {
 	// TODO special actions
 	switch game.GetAction() {
 	case PolicyPeek:
+		game.Broadcast(PresidentAction{Type: TypePeekBroadcast, President: game.President.Name})
+		game.President.Conn.SendMessage(CardsMessage{Type: TypePeek, Cards: game.Cards.Peek()})
+		game.NextPresident()
 	case InvestigatePlayer:
+		game.Broadcast(PresidentAction{Type: TypeInvestigate, President: game.President.Name})
 	case SelectPresident:
+		game.Broadcast(PresidentAction{Type: TypePresidentSelect, President: game.President.Name})
 	case Execution:
+		game.Broadcast(PresidentAction{Type: TypeExecution, President: game.President.Name})
 	case Nothing:
 		game.NextPresident()
 	}

@@ -45,6 +45,11 @@ const (
 	TypeVetoRequest       Type = "vetorequest"
 	TypeVetoAccept        Type = "vetoaccept"
 	TypeEnactForce        Type = "enactforce"
+	TypePeek              Type = "peekcards"
+	TypePeekBroadcast     Type = "peek"
+	TypeInvestigate       Type = "investigate"
+	TypeExecution         Type = "execution"
+	TypePresidentSelect   Type = "presidentselect"
 )
 
 // Chat contains the necessary fields for a chat message
@@ -138,4 +143,9 @@ type Veto struct {
 	Type       Type   `json:"type"`
 	President  string `json:"president"`
 	Chancellor string `json:"chancellor"`
+}
+
+type PresidentAction struct {
+	Type      Type   `json:"type"`
+	President string `json:"president"`
 }
