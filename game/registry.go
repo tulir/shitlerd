@@ -19,6 +19,10 @@ package game
 
 var registry map[string]*Game
 
+func init() {
+	registry = make(map[string]*Game)
+}
+
 // Add creates a game and adds it to the registry
 func Add() string {
 	name := RandomName()
