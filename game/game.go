@@ -56,7 +56,7 @@ func (game *Game) Join(name string, conn Connection) (int, *Player) {
 	}
 	for i, player := range game.Players {
 		if player == nil {
-			game.Players[i] = &Player{Name: name, AuthToken: game.createAuthToken(), Connected: false, Alive: true, Vote: VoteEmpty, Conn: conn, Game: game}
+			game.Players[i] = &Player{Name: name, AuthToken: game.createAuthToken(), Connected: true, Alive: true, Vote: VoteEmpty, Conn: conn, Game: game}
 			game.Broadcast(JoinQuit{Type: TypeJoin, Name: name})
 			return i, game.Players[i]
 		} else if player.Name == name {
