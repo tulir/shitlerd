@@ -162,11 +162,11 @@ func (c *connection) join(data map[string]string) (response map[string]interface
 		case -3:
 			response["success"] = false
 			response["message"] = "gamestarted"
+		default:
+			c.p = p
+			response["success"] = true
+			response["authtoken"] = p.AuthToken
 		}
-
-		c.p = p
-		response["success"] = true
-		response["authtoken"] = p.AuthToken
 	} else {
 		if authOk && p.AuthToken == authtoken {
 			response["success"] = true
