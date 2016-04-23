@@ -150,7 +150,9 @@ func (game *Game) Facists() int {
 // Broadcast a message to all players
 func (game *Game) Broadcast(msg interface{}) {
 	for _, player := range game.Players {
-		player.Conn.SendMessage(msg)
+		if player != nil {
+			player.Conn.SendMessage(msg)
+		}
 	}
 }
 
