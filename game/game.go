@@ -50,8 +50,8 @@ func CreateGame(name string) *Game {
 }
 
 // Join the given player
-func (game *Game) Join(name string, conn Connection) (int, *Player) {
-	if game.Started {
+func (game *Game) Join(name, authtoken string, conn Connection) (int, *Player) {
+	if game.Started && len(authtoken) == 0 {
 		return -3, nil
 	}
 	for i, player := range game.Players {
@@ -60,6 +60,16 @@ func (game *Game) Join(name string, conn Connection) (int, *Player) {
 			game.Broadcast(JoinQuit{Type: TypeJoin, Name: name})
 			return i, game.Players[i]
 		} else if player.Name == name {
+			if player.AuthToken == authtoken {
+				if player.Conn != nil {
+					player.Conn.SendMessage("connected-other")
+					player.Conn.Close()
+				}
+				player.Game.Broadcast(JoinQuit{Type: TypeConnected, Name: player.Name})
+				player.Conn = conn
+				player.Connected = true
+				return i, player
+			}
 			return -2, nil
 		}
 	}
@@ -179,19 +189,6 @@ type Player struct {
 	Game      *Game
 }
 
-// Connect is called when a player connects
-func (player *Player) Connect(conn Connection) {
-	if player.Conn != nil {
-		player.Conn.SendMessage("connected-other")
-		player.Conn.Close()
-	}
-
-	player.Conn = conn
-	player.Connected = true
-
-	player.Game.Broadcast(JoinQuit{Type: TypeConnected, Name: player.Name})
-}
-
 // Disconnect is called when a player disconnects
 func (player *Player) Disconnect() {
 	player.Connected = false
@@ -207,7 +204,15 @@ func (player *Player) ReceiveMessage(msg map[string]string) {
 	game := player.Game
 	if msg["type"] == TypeChat.String() {
 		game.Broadcast(Chat{Type: TypeChat, Sender: player.Name, Message: msg["message"]})
-	} else if msg["type"] == TypeVote.String() && game.State == ActVote {
+	} else if msg["type"] == TypeStart.String() && !game.Started && game.PlayerCount() >= 5 {
+		game.Start()
+	}
+
+	if !game.Started {
+		return
+	}
+
+	if msg["type"] == TypeVote.String() && game.State == ActVote {
 		game.Vote(player, msg["vote"])
 	} else if msg["type"] == TypePickChancellor.String() && game.President == player && game.State == ActPickChancellor {
 		game.PickChancellor(msg["name"])
@@ -219,8 +224,6 @@ func (player *Player) ReceiveMessage(msg map[string]string) {
 		game.VetoRequest()
 	} else if msg["type"] == TypeVetoAccept.String() && game.President == player && game.VetoRequested {
 		game.VetoAccept()
-	} else if msg["type"] == TypeStart.String() && !game.Started && game.PlayerCount() >= 5 {
-		game.Start()
 	}
 }
 

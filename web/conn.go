@@ -49,6 +49,7 @@ func (c *connection) SendMessage(msg interface{}) {
 }
 
 func (c *connection) Close() {
+	fmt.Println("DEBUG: Connection closed by game")
 	c.write(websocket.CloseMessage, []byte{})
 	c.p = nil
 }
@@ -81,7 +82,7 @@ func (c *connection) readPump() {
 				fmt.Println(val)
 				c.ch <- val
 			}
-			return
+			continue
 		}
 
 		c.p.ReceiveMessage(data)
@@ -141,42 +142,28 @@ func (c *connection) join(data map[string]string) (response map[string]interface
 		response["message"] = "gamenotfound"
 		return
 	}
-	authtoken, authOk := response["authtoken"]
+	authtoken, authOk := data["authtoken"]
 	if g.Started && !authOk {
 		response["success"] = false
 		response["message"] = "gamestarted"
 	}
 
-	p := g.GetPlayer(data["name"])
-	if p == nil {
-		var state int
-		state, p = g.Join(data["name"], c)
+	state, p := g.Join(data["name"], authtoken, c)
 
-		switch state {
-		case -1:
-			response["success"] = false
-			response["message"] = "full"
-		case -2:
-			response["success"] = false
-			response["message"] = "nameused"
-		case -3:
-			response["success"] = false
-			response["message"] = "gamestarted"
-		default:
-			c.p = p
-			response["success"] = true
-			response["authtoken"] = p.AuthToken
-		}
-	} else {
-		if authOk && p.AuthToken == authtoken {
-			response["success"] = true
-			response["authtoken"] = p.AuthToken
-			c.p = p
-			p.Connect(c)
-		} else {
-			response["success"] = false
-			response["message"] = "nameused"
-		}
+	switch state {
+	case -1:
+		response["success"] = false
+		response["message"] = "full"
+	case -2:
+		response["success"] = false
+		response["message"] = "nameused"
+	case -3:
+		response["success"] = false
+		response["message"] = "gamestarted"
+	default:
+		c.p = p
+		response["success"] = true
+		response["authtoken"] = p.AuthToken
 	}
 	return
 }
