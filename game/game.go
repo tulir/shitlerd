@@ -46,7 +46,7 @@ type Game struct {
 
 // CreateGame creates a game with the default cards and max 10 players
 func CreateGame(name string) *Game {
-	return &Game{Name: RandomName(), Players: make([]*Player, 10), Cards: CreateDeck()}
+	return &Game{Name: name, Players: make([]*Player, 10), Cards: CreateDeck()}
 }
 
 // Join the given player
