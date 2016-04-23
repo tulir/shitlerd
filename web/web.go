@@ -25,7 +25,6 @@ import (
 // Load the web server
 func Load(addr string) {
 	http.HandleFunc("/socket", serveWs)
-	http.HandleFunc("/join/", join)
 	err := http.ListenAndServe(addr, context.ClearHandler(http.DefaultServeMux))
 	if err != nil {
 		panic(err)
