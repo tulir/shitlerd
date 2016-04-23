@@ -110,14 +110,18 @@ func (c *connection) writePump() {
 		case new, ok := <-c.ch:
 			if !ok {
 				c.write(websocket.CloseMessage, []byte{})
-				c.p.Disconnect()
+				if c.p != nil {
+					c.p.Disconnect()
+				}
 				return
 			}
 
 			err := c.writeJSON(new)
 			if err != nil {
 				fmt.Println("Disconnected:", err)
-				c.p.Disconnect()
+				if c.p != nil {
+					c.p.Disconnect()
+				}
 				return
 			}
 		case <-ticker.C:
