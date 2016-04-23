@@ -179,14 +179,21 @@ type Player struct {
 
 // Connect is called when a player connects
 func (player *Player) Connect(conn Connection) {
+	if player.Conn != nil {
+		player.Conn.SendMessage("connected-other")
+		player.Conn.Close()
+	}
+
 	player.Conn = conn
 	player.Connected = true
+
 	player.Game.Broadcast(JoinQuit{Type: TypeConnected, Name: player.Name})
 }
 
 // Disconnect is called when a player disconnects
 func (player *Player) Disconnect() {
 	player.Connected = false
+	player.Conn = nil
 	player.Game.Broadcast(JoinQuit{Type: TypeDisconnected, Name: player.Name})
 }
 
@@ -218,4 +225,5 @@ func (player *Player) ReceiveMessage(msg map[string]string) {
 // Connection is a way to send messages to a player
 type Connection interface {
 	SendMessage(msg interface{})
+	Close()
 }
