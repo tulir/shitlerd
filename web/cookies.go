@@ -18,6 +18,7 @@
 package web
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/gorilla/sessions"
 	sgame "maunium.net/go/shitlerd/game"
@@ -38,28 +39,41 @@ func initStore(address string) {
 	}
 }
 
+type jsonCookies struct {
+	Name      string `json:"name"`
+	Game      string `json:"game"`
+	AuthToken string `json:"authtoken"`
+}
+
 func checkAuth(w http.ResponseWriter, r *http.Request) (*sgame.Player, string) {
+	var cookies = jsonCookies{}
+
 	session, err := store.Get(r, "mauIRC")
-	if err != nil {
-		return nil, "invalidstore"
+	if err == nil {
+		nameI := session.Values["name"]
+		gameI := session.Values["game"]
+		authTokenI := session.Values["authtoken"]
+		if nameI == nil || gameI == nil || authTokenI == nil {
+			return nil, "invalidsession"
+		}
+		cookies.Name = nameI.(string)
+		cookies.Game = gameI.(string)
+		cookies.AuthToken = authTokenI.(string)
+	} else {
+		dec := json.NewDecoder(r.Body)
+		dec.Decode(cookies)
 	}
 
-	nameI := session.Values["name"]
-	gameI := session.Values["game"]
-	authTokenI := session.Values["authtoken"]
-	if nameI == nil || gameI == nil || authTokenI == nil {
-		return nil, "invalidsession"
+	if len(cookies.Game) == 0 || len(cookies.Name) == 0 || len(cookies.AuthToken) == 0 {
+		return nil, "invaliddata"
 	}
-	name := nameI.(string)
-	game := gameI.(string)
-	authToken := authTokenI.(string)
 
-	g, ok := sgame.Get(game)
+	g, ok := sgame.Get(cookies.Game)
 	if !ok || g == nil || g.Ended {
 		return nil, "invalidgame"
 	}
-	p := g.GetPlayer(name)
-	if p.AuthToken != authToken {
+	p := g.GetPlayer(cookies.Name)
+	if p.AuthToken != cookies.AuthToken {
 		return nil, "invalidauthtoken"
 	}
 	return p, "success"
@@ -89,11 +103,11 @@ func join(w http.ResponseWriter, r *http.Request) {
 	game, ok := sgame.Get(gname)
 	if !ok || game == nil {
 		w.WriteHeader(http.StatusNotFound)
-		w.Write([]byte("gamenotfound"))
+		fmt.Fprintf(w, "{\"success\": false, \"message\": \"%s\"}", "gamenotfound")
 		return
 	} else if game.Started {
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write([]byte("gamestarted"))
+		fmt.Fprintf(w, "{\"success\": false, \"message\": \"%s\"}", "gamestarted")
 	}
 
 	status, player := game.Join(name, notcon{})
@@ -101,13 +115,13 @@ func join(w http.ResponseWriter, r *http.Request) {
 	switch status {
 	case -1:
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write([]byte("full"))
+		fmt.Fprintf(w, "{\"success\": false, \"message\": \"%s\"}", "full")
 	case -2:
 		w.WriteHeader(http.StatusConflict)
-		w.Write([]byte("nameused"))
+		fmt.Fprintf(w, "{\"success\": false, \"message\": \"%s\"}", "nameused")
 	case -3:
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write([]byte("gamestarted"))
+		fmt.Fprintf(w, "{\"success\": false, \"message\": \"%s\"}", "gamestarted")
 		return
 	}
 
@@ -125,5 +139,5 @@ func join(w http.ResponseWriter, r *http.Request) {
 	session.Values["authtoken"] = player.AuthToken
 	session.Save(r, w)
 
-	fmt.Fprintf(w, "{\"name\": \"%s\", \"game\": \"%s\", \"authtoken\": \"%s\"}", player.Name, game.Name, player.AuthToken)
+	fmt.Fprintf(w, "{\"success\": true, \"name\": \"%s\", \"game\": \"%s\", \"authtoken\": \"%s\"}", player.Name, game.Name, player.AuthToken)
 }

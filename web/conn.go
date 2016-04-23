@@ -68,6 +68,13 @@ func (c *connection) readPump() {
 			continue
 		}
 
+		if c.p == nil {
+			if data["type"] == "join" {
+				join(data)
+			}
+			return
+		}
+
 		c.p.ReceiveMessage(data)
 	}
 }
@@ -113,6 +120,8 @@ func (c *connection) writePump() {
 	}
 }
 
+func join(data map[string]string)
+
 func serveWs(w http.ResponseWriter, r *http.Request) {
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -120,14 +129,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	player, status := checkAuth(w, r)
-	if status != "success" {
-		w.Write([]byte(status))
-		w.WriteHeader(http.StatusUnauthorized)
-	}
-	c := &connection{ws: ws, p: player}
-	c.ch = make(chan interface{})
-	player.Connect(c)
+	c := &connection{ws: ws, ch: make(chan interface{})}
 
 	c.ws.SetReadLimit(maxMessageSize)
 	c.ws.SetReadDeadline(time.Now().Add(pongWait))
