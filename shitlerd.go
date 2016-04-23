@@ -15,6 +15,17 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 package main
 
-func main() {
+import (
+	"flag"
+	"fmt"
+	_ "maunium.net/go/shitlerd/game"
+	"maunium.net/go/shitlerd/web"
+)
 
+var address = flag.String("address", "localhost", "The address to bind the web server to.")
+var port = flag.Int("port", 29305, "The port to bind the web server to.")
+
+func main() {
+	flag.Parse()
+	web.Load(fmt.Sprintf("%s:%d", *address, *port))
 }
