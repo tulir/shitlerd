@@ -18,6 +18,7 @@
 package web
 
 import (
+	"fmt"
 	"github.com/gorilla/sessions"
 	sgame "maunium.net/go/shitlerd/game"
 	"net/http"
@@ -87,26 +88,26 @@ func join(w http.ResponseWriter, r *http.Request) {
 
 	game, ok := sgame.Get(gname)
 	if !ok || game == nil {
-		w.Write([]byte("gamenotfound"))
 		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte("gamenotfound"))
 		return
 	} else if game.Started {
-		w.Write([]byte("gamestarted"))
 		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte("gamestarted"))
 	}
 
 	status, player := game.Join(name, notcon{})
 
 	switch status {
 	case -1:
+		w.WriteHeader(http.StatusUnauthorized)
 		w.Write([]byte("full"))
-		w.WriteHeader(http.StatusUnauthorized)
 	case -2:
-		w.Write([]byte("nameused"))
 		w.WriteHeader(http.StatusConflict)
+		w.Write([]byte("nameused"))
 	case -3:
-		w.Write([]byte("gamestarted"))
 		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte("gamestarted"))
 		return
 	}
 
@@ -123,4 +124,6 @@ func join(w http.ResponseWriter, r *http.Request) {
 	session.Values["game"] = game.Name
 	session.Values["authtoken"] = player.AuthToken
 	session.Save(r, w)
+
+	fmt.Fprintf(w, "{\"name\": \"%s\", \"game\": \"%s\", \"authtoken\": \"%s\"}", player.Name, game.Name, player.AuthToken)
 }
