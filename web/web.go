@@ -19,14 +19,20 @@ package web
 
 import (
 	"github.com/gorilla/context"
+	"maunium.net/go/shitlerd/game"
 	"net/http"
 )
 
 // Load the web server
 func Load(addr string) {
+	http.HandleFunc("/create", create)
 	http.HandleFunc("/socket", serveWs)
 	err := http.ListenAndServe(addr, context.ClearHandler(http.DefaultServeMux))
 	if err != nil {
 		panic(err)
 	}
+}
+
+func create(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte(game.New()))
 }

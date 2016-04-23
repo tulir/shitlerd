@@ -68,14 +68,18 @@ func (c *connection) readPump() {
 		}
 
 		var data = make(map[string]string)
-		err = json.Unmarshal(message, data)
+		err = json.Unmarshal(message, &data)
 		if err != nil {
+			fmt.Println(err)
 			continue
 		}
 
+		fmt.Println(data)
 		if c.p == nil {
 			if data["type"] == "join" {
-				c.join(data)
+				val := c.join(data)
+				fmt.Println(val)
+				c.ch <- val
 			}
 			return
 		}
