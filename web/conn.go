@@ -136,7 +136,7 @@ func (c *connection) writePump() {
 func (c *connection) join(data map[string]string) (response map[string]interface{}) {
 	response = make(map[string]interface{})
 	g, ok := game.Get(data["game"])
-	if !ok || g != nil {
+	if !ok || g == nil {
 		response["success"] = false
 		response["message"] = "gamenotfound"
 		return
@@ -165,7 +165,6 @@ func (c *connection) join(data map[string]string) (response map[string]interface
 		}
 
 		c.p = p
-		p.Connect(c)
 		response["success"] = true
 		response["authtoken"] = p.AuthToken
 	} else {
