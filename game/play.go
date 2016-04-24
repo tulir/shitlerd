@@ -34,6 +34,9 @@ func (game *Game) Start() {
 	liberalsAvailable := game.Liberals()
 	hitlerAvailable := true
 	for _, player := range game.Players {
+		if player == nil {
+			continue
+		}
 		var availableRoles []Role
 		if !hitlerAvailable && facistsAvailable == 0 {
 			availableRoles = []Role{RoleLiberal}
