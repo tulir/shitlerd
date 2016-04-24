@@ -89,13 +89,11 @@ func (game *Game) SetPresident(player *Player) {
 
 // PickChancellor is called when the president picks his/her chancellor
 func (game *Game) PickChancellor(name string) {
-	for _, player := range game.Players {
-		if player.Name == name {
-			game.Chancellor = player
-			game.State = ActVote
-			game.Broadcast(StartVote{Type: TypeStartVote, President: game.President.Name, Chancellor: game.Chancellor.Name})
-			return
-		}
+	p := game.GetPlayer(name)
+	if p != nil {
+		game.Chancellor = p
+		game.State = ActVote
+		game.Broadcast(StartVote{Type: TypeStartVote, President: game.President.Name, Chancellor: game.Chancellor.Name})
 	}
 }
 
@@ -106,6 +104,9 @@ func (game *Game) Vote(player *Player, vote string) {
 
 	var ja, nein = 0, 0
 	for _, player := range game.Players {
+		if player == nil {
+			continue
+		}
 		switch player.Vote {
 		case VoteEmpty:
 			return
@@ -116,6 +117,9 @@ func (game *Game) Vote(player *Player, vote string) {
 		}
 	}
 	for _, player := range game.Players {
+		if player == nil {
+			continue
+		}
 		player.Vote = VoteEmpty
 	}
 	if ja > nein {
@@ -255,39 +259,33 @@ func (game *Game) Enact(card Card, force bool) {
 
 // Investigated is called when the president has investigated a player
 func (game *Game) Investigated(name string) {
-	for _, player := range game.Players {
-		if player.Name == name {
-			game.Broadcast(PresidentActionFinished{Type: TypeInvestigated, President: game.President.Name, Name: player.Name})
-			game.President.Conn.SendMessage(InvestigateResult{Type: TypeInvestigateResult, Name: player.Name, Result: player.Role.Card()})
-			game.NextPresident()
-			return
-		}
+	p := game.GetPlayer(name)
+	if p != nil {
+		game.Broadcast(PresidentActionFinished{Type: TypeInvestigated, President: game.President.Name, Name: p.Name})
+		game.President.Conn.SendMessage(InvestigateResult{Type: TypeInvestigateResult, Name: p.Name, Result: p.Role.Card()})
+		game.NextPresident()
 	}
 }
 
 // SelectedPresident is called when the president selects the next president
 func (game *Game) SelectedPresident(name string) {
-	for _, player := range game.Players {
-		if player.Name == name {
-			game.Broadcast(PresidentActionFinished{Type: TypePresidentSelected, President: game.President.Name, Name: player.Name})
-			game.SetPresident(player)
-			return
-		}
+	p := game.GetPlayer(name)
+	if p != nil {
+		game.Broadcast(PresidentActionFinished{Type: TypePresidentSelected, President: game.President.Name, Name: p.Name})
+		game.SetPresident(p)
 	}
 }
 
 // ExecutedPlayer is called when the president executes a player
 func (game *Game) ExecutedPlayer(name string) {
-	for _, player := range game.Players {
-		if player.Name == name {
-			game.Broadcast(PresidentActionFinished{Type: TypeExecuted, President: game.President.Name, Name: player.Name})
-			player.Alive = false
-			if player.Role == RoleHitler {
-				game.End(CardLiberal)
-			} else {
-				game.NextPresident()
-			}
-			return
+	p := game.GetPlayer(name)
+	if p != nil {
+		game.Broadcast(PresidentActionFinished{Type: TypeExecuted, President: game.President.Name, Name: p.Name})
+		p.Alive = false
+		if p.Role == RoleHitler {
+			game.End(CardLiberal)
+		} else {
+			game.NextPresident()
 		}
 	}
 }
@@ -302,6 +300,9 @@ func (game *Game) Error(msg string) {
 func (game *Game) End(winner Card) {
 	var end = End{Type: TypeEnd, Winner: winner, Roles: make(map[string]Role)}
 	for _, player := range game.Players {
+		if player == nil {
+			continue
+		}
 		end.Roles[player.Name] = player.Role
 	}
 	game.Broadcast(end)
