@@ -228,6 +228,12 @@ func (player *Player) ReceiveMessage(msg map[string]string) {
 		game.VetoRequest()
 	} else if msg["type"] == TypeVetoAccept.String() && game.President == player && game.VetoRequested {
 		game.VetoAccept()
+	} else if msg["type"] == TypePresidentSelect.String() && game.President == player && game.State == ActSelectPresident {
+		game.SelectedPresident(msg["name"])
+	} else if msg["type"] == TypeExecute.String() && game.President == player && game.State == ActExecution {
+		game.ExecutedPlayer(msg["name"])
+	} else if msg["type"] == TypeInvestigate.String() && game.President == player && game.State == ActInvestigatePlayer {
+		game.Investigated(msg["name"])
 	}
 }
 
