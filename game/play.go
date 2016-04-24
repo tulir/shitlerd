@@ -175,8 +175,8 @@ func (game *Game) StartDiscard() {
 
 	game.FailedGovs = 0
 	game.Broadcast(Discard{Type: TypePresidentDiscard, Name: game.President.Name})
-	game.BroadcastTable()
 	game.Discarding = game.Cards.PickCards()
+	game.BroadcastTable()
 	game.President.SendMessage(CardsMessage{Type: TypeCards, Cards: game.Discarding})
 }
 
