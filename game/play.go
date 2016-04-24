@@ -193,8 +193,8 @@ func (game *Game) DiscardCard(c string) {
 	game.Discarding[card] = game.Discarding[len(game.Discarding)-1]
 	game.Discarding = game.Discarding[:len(game.Discarding)-1]
 
-	game.BroadcastTable()
 	if len(game.Discarding) == 2 {
+		game.BroadcastTable()
 		game.Broadcast(Discard{Type: TypeChancellorDiscard, Name: game.Chancellor.Name})
 		game.Chancellor.SendMessage(CardsMessage{Type: TypeCards, Cards: game.Discarding})
 		game.State = ActDiscardChancellor
