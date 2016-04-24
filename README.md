@@ -21,6 +21,7 @@ Possible errors:
 ### Game protocol
 Every message must contain the field `type` to identify what the message should contain.
 Messages that the server receives at the wrong time or from the wrong user are ignored.
+**All** fields in client -> server messages must be JSON strings!
 
 #### Client -> server messages
 * Type `chat` - A chat message.
