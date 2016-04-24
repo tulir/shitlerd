@@ -49,7 +49,6 @@ func (c *connection) SendMessage(msg interface{}) {
 }
 
 func (c *connection) Close() {
-	fmt.Println("DEBUG: Connection closed by game")
 	c.write(websocket.CloseMessage, []byte{})
 	c.p = nil
 }
@@ -75,11 +74,9 @@ func (c *connection) readPump() {
 			continue
 		}
 
-		fmt.Println(data)
 		if c.p == nil {
 			if data["type"] == "join" {
 				val := c.join(data)
-				fmt.Println(val)
 				c.ch <- val
 			}
 			continue
