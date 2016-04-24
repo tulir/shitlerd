@@ -205,11 +205,8 @@ func (player *Player) SendMessage(msg interface{}) {
 
 // ReceiveMessage should be called by the connection when the client sends a message
 func (player *Player) ReceiveMessage(msg map[string]string) {
-	if !player.Alive {
-		return
-	}
 	game := player.Game
-	if msg["type"] == TypeChat.String() {
+	if msg["type"] == TypeChat.String() && player.Alive {
 		game.Broadcast(Chat{Type: TypeChat, Sender: player.Name, Message: msg["message"]})
 	} else if msg["type"] == TypeStart.String() && !game.Started && game.PlayerCount() >= 5 {
 		game.Start()
