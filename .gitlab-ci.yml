@@ -18,3 +18,4 @@ build:
         - shitlerd_amd64
         - shitlerd_arm
         - LICENSE
+        - README.md
