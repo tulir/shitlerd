@@ -165,12 +165,7 @@ func (game *Game) DiscardCard(c string) {
 	if err != nil || card >= len(game.Discarding) || card < 0 {
 		return
 	}
-	switch game.Discarding[card] {
-	case CardFacist:
-		game.Cards.DiscardedFacist++
-	case CardLiberal:
-		game.Cards.DiscardedLiberal++
-	}
+	game.Cards.Discarded = append(game.Cards.Discarded, game.Discarding[card])
 	game.Discarding[card] = game.Discarding[len(game.Discarding)-1]
 	game.Discarding = game.Discarding[:len(game.Discarding)-1]
 
@@ -199,12 +194,7 @@ func (game *Game) VetoAccept() {
 	game.Broadcast(Veto{Type: TypeVetoAccept, President: game.President.Name, Chancellor: game.Chancellor.Name})
 
 	for _, card := range game.Discarding {
-		switch card {
-		case CardLiberal:
-			game.Cards.DiscardedLiberal++
-		case CardFacist:
-			game.Cards.DiscardedFacist++
-		}
+		game.Cards.Discarded = append(game.Cards.Discarded, card)
 	}
 	game.BroadcastTable()
 	game.Discarding = []Card{}

@@ -19,13 +19,10 @@ package game
 
 // Cards contains all the cards in the game.
 type Cards struct {
-	DeckLiberal      int
-	DeckFacist       int
-	DiscardedLiberal int
-	DiscardedFacist  int
-	TableLiberal     int
-	TableFacist      int
-	PeekedCards      []Card
+	Deck         []Card
+	Discarded    []Card
+	TableLiberal int
+	TableFacist  int
 }
 
 // Card is a single card (facist or liberal)
@@ -38,116 +35,57 @@ const (
 )
 
 // CreateDeck creates a Cards object with 6 liberal and 11 facist cards in the deck
-func CreateDeck() Cards {
-	return Cards{DeckLiberal: 6, DeckFacist: 11, DiscardedLiberal: 0, DiscardedFacist: 0, TableLiberal: 0, TableFacist: 0}
+func CreateDeck() *Cards {
+	var cards = &Cards{Deck: make([]Card, 17), Discarded: []Card{}, TableLiberal: 0, TableFacist: 0}
+	liberal := 6
+	facist := 11
+	for i := 0; i < 17; i++ {
+		if liberal == 0 && facist == 0 {
+			break
+		} else if liberal == 0 {
+			cards.Deck[i] = CardFacist
+			facist--
+		} else if facist == 0 {
+			cards.Deck[i] = CardLiberal
+			liberal--
+		} else {
+			if r.Int()%2 == 0 {
+				cards.Deck[i] = CardLiberal
+				liberal--
+			} else {
+				cards.Deck[i] = CardFacist
+				facist--
+			}
+		}
+	}
+	return cards
 }
 
 // PickCard picks one card from the deck
-func (cards Cards) PickCard() Card {
-	var picked Card
-	if cards.TableFacist == 0 && cards.TableLiberal == 0 {
-		cards.ResetDiscarded()
-	}
-	if cards.TableFacist == 0 {
-		picked = CardLiberal
-		cards.TableLiberal--
-	} else if cards.TableLiberal == 0 {
-		picked = CardFacist
-		cards.TableFacist--
-	} else {
-		if r.Int()%2 == 0 {
-			picked = CardLiberal
-			cards.TableLiberal--
-		} else {
-			picked = CardFacist
-			cards.TableFacist--
-		}
-	}
-
-	if len(cards.PeekedCards) > 0 {
-		newPicked := cards.PeekedCards[0]
-		cards.PeekedCards[0] = picked
-		return newPicked
-	}
-	return picked
+func (cards *Cards) PickCard() Card {
+	card := cards.Deck[0]
+	cards.Deck = cards.Deck[1:]
+	return card
 }
 
 // PickCards picks `n` random cards from the deck
-func (cards Cards) PickCards() (picked []Card) {
-	if len(cards.PeekedCards) > 0 {
-		picked = make([]Card, 3)
-		for i, card := range cards.PeekedCards {
-			picked[i] = card
-			switch card {
-			case CardFacist:
-				cards.TableFacist--
-			case CardLiberal:
-				cards.TableLiberal--
-			}
-		}
-		cards.PeekedCards = []Card{}
-		return
-	}
-	picked = make([]Card, 3)
-	for i := 0; i < 3; i++ {
-		if cards.TableFacist == 0 && cards.TableLiberal == 0 {
-			cards.ResetDiscarded()
-		}
-		if cards.TableFacist == 0 {
-			picked[i] = CardLiberal
-			cards.TableLiberal--
-		} else if cards.TableLiberal == 0 {
-			picked[i] = CardFacist
-			cards.TableFacist--
-		} else {
-			if r.Int()%2 == 0 {
-				picked[i] = CardLiberal
-				cards.TableLiberal--
-			} else {
-				picked[i] = CardFacist
-				cards.TableFacist--
-			}
-		}
-	}
-	return
+func (cards *Cards) PickCards() (picked []Card) {
+	picked = cards.Deck[0:3]
+	cards.Deck = cards.Deck[3:]
+	return picked
 }
 
 // Peek peeks at the top three cards
-func (cards Cards) Peek() []Card {
-	cards.PeekedCards = make([]Card, 3)
-	for i := 0; i < 3; i++ {
-		if cards.TableFacist == 0 && cards.TableLiberal == 0 {
-			cards.ResetDiscarded()
-		}
-		if cards.TableFacist == 0 {
-			cards.PeekedCards[i] = CardLiberal
-		} else if cards.TableLiberal == 0 {
-			cards.PeekedCards[i] = CardFacist
-		} else {
-			if r.Int()%2 == 0 {
-				cards.PeekedCards[i] = CardLiberal
-			} else {
-				cards.PeekedCards[i] = CardFacist
-			}
-		}
-	}
-	return cards.PeekedCards
-}
-
-// DeckSize returns the amount of cards in the deck
-func (cards Cards) DeckSize() int {
-	return cards.DeckLiberal + cards.DeckFacist
-}
-
-// DiscardedSize returns the amount of discarded cards
-func (cards Cards) DiscardedSize() int {
-	return cards.DiscardedLiberal + cards.DiscardedFacist
+func (cards *Cards) Peek() []Card {
+	return cards.Deck[0:3]
 }
 
 // ResetDiscarded moves all discarded cards back to the deck
-func (cards Cards) ResetDiscarded() {
-	cards.DeckLiberal += cards.DiscardedLiberal
-	cards.DeckFacist += cards.DiscardedFacist
-	cards.DiscardedLiberal = 0
-	cards.DiscardedFacist = 0
+func (cards *Cards) ResetDiscarded() {
+	for i := range cards.Discarded {
+		j := r.Intn(i + 1)
+		cards.Discarded[i], cards.Discarded[j] = cards.Discarded[j], cards.Discarded[i]
+	}
+	cards.Deck = append(cards.Deck, cards.Discarded...)
+	cards.Discarded = []Card{}
 }

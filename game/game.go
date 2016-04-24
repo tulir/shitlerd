@@ -30,7 +30,7 @@ var r = rand.New(rand.NewSource(time.Now().UnixNano()))
 type Game struct {
 	Name       string
 	Players    []*Player
-	Cards      Cards
+	Cards      *Cards
 	Discarding []Card
 	Started    bool
 	Ended      bool
@@ -170,8 +170,8 @@ func (game *Game) Broadcast(msg interface{}) {
 func (game *Game) BroadcastTable() {
 	game.Broadcast(Table{
 		Type:         TypeTable,
-		Deck:         game.Cards.DeckLiberal + game.Cards.DeckFacist,
-		Discarded:    game.Cards.DiscardedLiberal + game.Cards.DiscardedFacist,
+		Deck:         len(game.Cards.Deck),
+		Discarded:    len(game.Cards.Discarded),
 		TableLiberal: game.Cards.TableLiberal,
 		TableFacist:  game.Cards.TableFacist,
 	})
