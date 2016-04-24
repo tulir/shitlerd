@@ -62,12 +62,6 @@ func (game *Game) Start() {
 
 		player.Role = availableRoles[r.Intn(len(availableRoles))]
 
-		if player.Role == RoleLiberal || (pc > 6 && player.Role == RoleHitler) {
-			player.SendMessage(Start{Type: TypeStart, Role: player.Role, Players: playersToLiberal})
-		} else if player.Role == RoleFacist || (pc < 7 && player.Role == RoleHitler) {
-			player.SendMessage(Start{Type: TypeStart, Role: player.Role, Players: playersToFacists})
-		}
-
 		switch player.Role {
 		case RoleLiberal:
 			liberalsAvailable--
@@ -75,6 +69,17 @@ func (game *Game) Start() {
 			facistsAvailable--
 		case RoleHitler:
 			hitlerAvailable = false
+		}
+	}
+
+	for _, player := range game.Players {
+		if player == nil {
+			continue
+		}
+		if player.Role == RoleLiberal || (pc > 6 && player.Role == RoleHitler) {
+			player.SendMessage(Start{Type: TypeStart, Role: player.Role, Players: playersToLiberal})
+		} else if player.Role == RoleFacist || (pc < 7 && player.Role == RoleHitler) {
+			player.SendMessage(Start{Type: TypeStart, Role: player.Role, Players: playersToFacists})
 		}
 	}
 	game.NextPresident()
