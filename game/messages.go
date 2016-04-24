@@ -56,6 +56,7 @@ const (
 	TypePresidentSelect   Type = "presidentselect"
 	TypePresidentSelected Type = "presidentselected"
 	TypeExecuted          Type = "executed"
+	TypeGovernmentFailed  Type = "governmentfailed"
 )
 
 // Chat contains the necessary fields for a chat message
@@ -152,7 +153,7 @@ type Veto struct {
 	Chancellor string `json:"chancellor"`
 }
 
-// PresidentAction is broadcasted when the president must perform a special action.
+// PresidentAction is broadcasted when the president must perform a special action
 type PresidentAction struct {
 	Type      Type   `json:"type"`
 	President string `json:"president"`
@@ -170,4 +171,11 @@ type InvestigateResult struct {
 	Type   Type   `json:"type"`
 	Name   string `json:"name"`
 	Result Card   `json:"result"`
+}
+
+// GovernmentFailed is broadcasted when the government fails
+type GovernmentFailed struct {
+	Type  Type `json:"type"`
+	Times int  `json:"times"`
+	Veto  bool `json:"veto"`
 }

@@ -52,7 +52,10 @@ Messages that the server receives at the wrong time or from the wrong user are i
 * Type `startvote` - The president has picked his/her chancellor and players msut vote.
   * Field `president` - The name of the president.
   * Field `chancellor` - The name of the chancellor.
-* Type `presidentdiscard` - The vote has ended successfully and the president has received three cards, one of which he/she must discard.
+* Type `governmentfailed` - The vote has failed.
+  * Field `times` - The amount of times the government has failed by now.
+  * Field `veto` - True if the fail was caused by the president and chancellor vetoing the card pick.
+* Type `presidentdiscard` - The vote has ended successfully and the president has received three cards, one of which he/she must discard. The government fail counter is reset when this event occurs.
   * Field `name` - The name of the president.
 * Type `chancellordiscard` - The president has discarded one card and the chancellor has received the remaining two.
   * Field `name` - The name of the chancellor.

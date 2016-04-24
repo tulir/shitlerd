@@ -149,12 +149,19 @@ func (game *Game) Vote(player *Player, vote string) {
 	if ja > nein {
 		game.StartDiscard()
 	} else {
-		game.FailedGovs++
-		if game.FailedGovs >= 3 {
-			game.ThreeGovsFailed()
-		} else {
-			game.NextPresident()
-		}
+		game.GovernmentFailed(false)
+
+	}
+}
+
+// GovernmentFailed is called when the government fails.
+func (game *Game) GovernmentFailed(veto bool) {
+	game.FailedGovs++
+	if game.FailedGovs >= 3 {
+		game.ThreeGovsFailed()
+	} else {
+		game.Broadcast(GovernmentFailed{Type: TypeGovernmentFailed, Times: game.FailedGovs, Veto: veto})
+		game.NextPresident()
 	}
 }
 
@@ -223,12 +230,7 @@ func (game *Game) VetoAccept() {
 	game.BroadcastTable()
 	game.Discarding = []Card{}
 
-	game.FailedGovs++
-	if game.FailedGovs >= 3 {
-		game.ThreeGovsFailed()
-	} else {
-		game.NextPresident()
-	}
+	game.GovernmentFailed(true)
 }
 
 // Enact is called when a card is enacted
