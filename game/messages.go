@@ -73,8 +73,9 @@ type JoinQuit struct {
 
 // Start contains the necessary fields for a game start message
 type Start struct {
-	Type Type `json:"type"`
-	Role Role `json:"role"`
+	Type    Type            `json:"type"`
+	Role    Role            `json:"role"`
+	Players map[string]Role `json:"players"`
 }
 
 // End contains the necessary fields for a game end message

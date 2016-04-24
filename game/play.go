@@ -33,6 +33,15 @@ func (game *Game) Start() {
 	facistsAvailable := game.Facists()
 	liberalsAvailable := game.Liberals()
 	hitlerAvailable := true
+
+	var playersToLiberal = make(map[string]Role)
+	var playersToFacists = make(map[string]Role)
+	pc := game.PlayerCount()
+	for _, player := range game.Players {
+		playersToLiberal[player.Name] = "unknown"
+		playersToFacists[player.Name] = player.Role
+	}
+
 	for _, player := range game.Players {
 		if player == nil {
 			continue
@@ -49,7 +58,12 @@ func (game *Game) Start() {
 		}
 
 		player.Role = availableRoles[r.Intn(len(availableRoles))]
-		player.Conn.SendMessage(Start{Type: TypeStart, Role: player.Role})
+
+		if player.Role == RoleLiberal || (pc > 6 && player.Role == RoleHitler) {
+			player.Conn.SendMessage(Start{Type: TypeStart, Role: player.Role, Players: playersToLiberal})
+		} else if player.Role == RoleFacist || (pc < 7 && player.Role == RoleHitler) {
+			player.Conn.SendMessage(Start{Type: TypeStart, Role: player.Role, Players: playersToFacists})
+		}
 
 		switch player.Role {
 		case RoleLiberal:
