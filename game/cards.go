@@ -63,6 +63,9 @@ func CreateDeck() *Cards {
 
 // PickCard picks one card from the deck
 func (cards *Cards) PickCard() Card {
+	if len(cards.Deck) < 1 {
+		cards.ResetDiscarded()
+	}
 	card := cards.Deck[0]
 	cards.Deck = cards.Deck[1:]
 	return card
@@ -70,6 +73,9 @@ func (cards *Cards) PickCard() Card {
 
 // PickCards picks `n` random cards from the deck
 func (cards *Cards) PickCards() (picked []Card) {
+	if len(cards.Deck) < 3 {
+		cards.ResetDiscarded()
+	}
 	picked = cards.Deck[0:3]
 	cards.Deck = cards.Deck[3:]
 	return picked
@@ -77,6 +83,9 @@ func (cards *Cards) PickCards() (picked []Card) {
 
 // Peek peeks at the top three cards
 func (cards *Cards) Peek() []Card {
+	if len(cards.Deck) < 3 {
+		cards.ResetDiscarded()
+	}
 	return cards.Deck[0:3]
 }
 
