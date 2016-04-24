@@ -28,7 +28,7 @@ func (game *Game) Start() {
 	}
 	game.Started = true
 
-	game.PresidentIndex = r.Intn(game.PlayerCount())
+	game.PresidentIndex = r.Intn(len(game.Players))
 
 	facistsAvailable := game.Facists()
 	liberalsAvailable := game.Liberals()
@@ -87,14 +87,14 @@ func (game *Game) Start() {
 
 // NextPresident moves the game to the next president
 func (game *Game) NextPresident() {
-	if game.PlayerCount() < 4 {
+	if game.PlayersInGame() < 4 {
 		game.Error("Not enough players left")
 	}
 	game.PresidentIndex++
 	if game.PresidentIndex >= 10 {
 		game.PresidentIndex = 0
 	}
-	if game.Players[game.PresidentIndex] == nil {
+	if game.Players[game.PresidentIndex] == nil || !game.Players[game.PresidentIndex].Alive {
 		game.NextPresident()
 		return
 	}

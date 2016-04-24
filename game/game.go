@@ -121,6 +121,16 @@ func (game *Game) PlayerCount() (i int) {
 	return
 }
 
+// PlayersInGame gets the amount of alive players in the game
+func (game *Game) PlayersInGame() (i int) {
+	for _, player := range game.Players {
+		if player != nil && player.Alive {
+			i++
+		}
+	}
+	return
+}
+
 // ConnectedPlayers gets the amount of connected players
 func (game *Game) ConnectedPlayers() (i int) {
 	for _, player := range game.Players {
