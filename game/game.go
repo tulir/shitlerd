@@ -53,6 +53,8 @@ func CreateGame(name string) *Game {
 func (game *Game) Join(name, authtoken string, conn Connection) (int, *Player) {
 	if game.Started && len(authtoken) == 0 {
 		return -3, nil
+	} else if len(name) < 3 || len(name) > 16 {
+		return -4, nil
 	}
 	for i, player := range game.Players {
 		if player == nil {

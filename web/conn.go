@@ -113,7 +113,6 @@ func (c *connection) writePump() {
 				}
 				return
 			}
-
 			err := c.writeJSON(new)
 			if err != nil {
 				fmt.Println("Disconnected:", err)
@@ -157,6 +156,9 @@ func (c *connection) join(data map[string]string) (response map[string]interface
 	case -3:
 		response["success"] = false
 		response["message"] = "gamestarted"
+	case -4:
+		response["success"] = false
+		response["message"] = "invalidname"
 	default:
 		c.p = p
 		response["success"] = true
