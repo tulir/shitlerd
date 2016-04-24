@@ -208,7 +208,7 @@ func (player *Player) ReceiveMessage(msg map[string]string) {
 		game.Start()
 	}
 
-	if !game.Started {
+	if !game.Started || game.Ended {
 		return
 	}
 
