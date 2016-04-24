@@ -38,6 +38,9 @@ func (game *Game) Start() {
 	var playersToFacists = make(map[string]Role)
 	pc := game.PlayerCount()
 	for _, player := range game.Players {
+		if player == nil {
+			continue
+		}
 		playersToLiberal[player.Name] = "unknown"
 		playersToFacists[player.Name] = player.Role
 	}
