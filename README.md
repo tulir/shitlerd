@@ -17,6 +17,7 @@ Possible errors:
 * `gamestarted` - The game has already started and no valid auth token was given
 * `full` - The game is full and no valid auth token was given
 * `nameused` - The name is already in used and no valid auth token was given
+* `invalidname` - The name is invalid (names must be [a-zA-Z0-9_-]{3,16})
 
 ### Game protocol
 Every message must contain the field `type` to identify what the message should contain.
