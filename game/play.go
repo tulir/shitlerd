@@ -60,9 +60,9 @@ func (game *Game) Start() {
 		player.Role = availableRoles[r.Intn(len(availableRoles))]
 
 		if player.Role == RoleLiberal || (pc > 6 && player.Role == RoleHitler) {
-			player.Conn.SendMessage(Start{Type: TypeStart, Role: player.Role, Players: playersToLiberal})
+			player.SendMessage(Start{Type: TypeStart, Role: player.Role, Players: playersToLiberal})
 		} else if player.Role == RoleFacist || (pc < 7 && player.Role == RoleHitler) {
-			player.Conn.SendMessage(Start{Type: TypeStart, Role: player.Role, Players: playersToFacists})
+			player.SendMessage(Start{Type: TypeStart, Role: player.Role, Players: playersToFacists})
 		}
 
 		switch player.Role {
@@ -114,7 +114,7 @@ func (game *Game) PickChancellor(name string) {
 // Vote is called when the player sends a vote command
 func (game *Game) Vote(player *Player, vote string) {
 	player.Vote = ParseVote(vote)
-	player.Conn.SendMessage(VoteMessage{Type: TypeVote, Vote: player.Vote})
+	player.SendMessage(VoteMessage{Type: TypeVote, Vote: player.Vote})
 
 	var ja, nein = 0, 0
 	for _, player := range game.Players {
@@ -169,7 +169,7 @@ func (game *Game) StartDiscard() {
 	game.Broadcast(Discard{Type: TypePresidentDiscard, Name: game.President.Name})
 	game.BroadcastTable()
 	game.Discarding = game.Cards.PickCards()
-	game.President.Conn.SendMessage(CardsMessage{Type: TypeCards, Cards: game.Discarding})
+	game.President.SendMessage(CardsMessage{Type: TypeCards, Cards: game.Discarding})
 }
 
 // DiscardCard is called when the chancellor or president discards a card
@@ -186,7 +186,7 @@ func (game *Game) DiscardCard(c string) {
 	game.BroadcastTable()
 	if len(game.Discarding) == 2 {
 		game.Broadcast(Discard{Type: TypeChancellorDiscard, Name: game.Chancellor.Name})
-		game.Chancellor.Conn.SendMessage(CardsMessage{Type: TypeCards, Cards: game.Discarding})
+		game.Chancellor.SendMessage(CardsMessage{Type: TypeCards, Cards: game.Discarding})
 		game.State = ActDiscardChancellor
 	} else if len(game.Discarding) == 1 {
 		game.Broadcast(Enact{Type: TypeEnact, President: game.President.Name, Chancellor: game.Chancellor.Name, Policy: game.Discarding[0]})
@@ -246,7 +246,7 @@ func (game *Game) Enact(card Card, force bool) {
 	switch act {
 	case ActPolicyPeek:
 		game.Broadcast(PresidentAction{Type: TypePeekBroadcast, President: game.President.Name})
-		game.President.Conn.SendMessage(CardsMessage{Type: TypePeek, Cards: game.Cards.Peek()})
+		game.President.SendMessage(CardsMessage{Type: TypePeek, Cards: game.Cards.Peek()})
 		game.NextPresident()
 	case ActInvestigatePlayer:
 		game.Broadcast(PresidentAction{Type: TypeInvestigate, President: game.President.Name})
@@ -266,7 +266,7 @@ func (game *Game) Investigated(name string) {
 	p := game.GetPlayer(name)
 	if p != nil {
 		game.Broadcast(PresidentActionFinished{Type: TypeInvestigated, President: game.President.Name, Name: p.Name})
-		game.President.Conn.SendMessage(InvestigateResult{Type: TypeInvestigateResult, Name: p.Name, Result: p.Role.Card()})
+		game.President.SendMessage(InvestigateResult{Type: TypeInvestigateResult, Name: p.Name, Result: p.Role.Card()})
 		game.NextPresident()
 	}
 }

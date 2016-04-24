@@ -62,7 +62,7 @@ func (game *Game) Join(name, authtoken string, conn Connection) (int, *Player) {
 		} else if player.Name == name {
 			if player.AuthToken == authtoken {
 				if player.Conn != nil {
-					player.Conn.SendMessage("connected-other")
+					player.SendMessage("connected-other")
 					player.Conn.Close()
 				}
 				player.Game.Broadcast(JoinQuit{Type: TypeConnected, Name: player.Name})
@@ -161,7 +161,7 @@ func (game *Game) Facists() int {
 func (game *Game) Broadcast(msg interface{}) {
 	for _, player := range game.Players {
 		if player != nil {
-			player.Conn.SendMessage(msg)
+			player.SendMessage(msg)
 		}
 	}
 }
@@ -194,6 +194,13 @@ func (player *Player) Disconnect() {
 	player.Connected = false
 	player.Conn = nil
 	player.Game.Broadcast(JoinQuit{Type: TypeDisconnected, Name: player.Name})
+}
+
+// SendMessage sends a message to the client
+func (player *Player) SendMessage(msg interface{}) {
+	if player.Conn != nil {
+		player.Conn.SendMessage(msg)
+	}
 }
 
 // ReceiveMessage should be called by the connection when the client sends a message
