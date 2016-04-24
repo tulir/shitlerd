@@ -126,12 +126,14 @@ func (game *Game) Vote(player *Player, vote string) {
 
 	var ja, nein = 0, 0
 	for _, player := range game.Players {
-		if player == nil {
+		if player == nil || !player.Alive {
 			continue
 		}
 		switch player.Vote {
 		case VoteEmpty:
-			return
+			if player.Connected {
+				return
+			}
 		case VoteJa:
 			ja++
 		case VoteNein:
