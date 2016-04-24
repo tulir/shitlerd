@@ -239,7 +239,7 @@ func (game *Game) Enact(card Card, force bool) {
 	case ActSelectPresident:
 		game.Broadcast(PresidentAction{Type: TypePresidentSelect, President: game.President.Name})
 	case ActExecution:
-		game.Broadcast(PresidentAction{Type: TypeExecution, President: game.President.Name})
+		game.Broadcast(PresidentAction{Type: TypeExecute, President: game.President.Name})
 	case ActNothing:
 		game.NextPresident()
 		return

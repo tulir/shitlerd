@@ -52,7 +52,7 @@ const (
 	TypeInvestigate       Type = "investigate"
 	TypeInvestigated      Type = "investigated"
 	TypeInvestigateResult Type = "investigateresult"
-	TypeExecution         Type = "execution"
+	TypeExecute           Type = "execute"
 	TypePresidentSelect   Type = "presidentselect"
 	TypePresidentSelected Type = "presidentselected"
 	TypeExecuted          Type = "executed"
