@@ -34,17 +34,6 @@ func (game *Game) Start() {
 	liberalsAvailable := game.Liberals()
 	hitlerAvailable := true
 
-	var playersToLiberal = make(map[string]Role)
-	var playersToFacists = make(map[string]Role)
-	pc := game.PlayerCount()
-	for _, player := range game.Players {
-		if player == nil {
-			continue
-		}
-		playersToLiberal[player.Name] = "unknown"
-		playersToFacists[player.Name] = player.Role
-	}
-
 	for _, player := range game.Players {
 		if player == nil {
 			continue
@@ -70,6 +59,17 @@ func (game *Game) Start() {
 		case RoleHitler:
 			hitlerAvailable = false
 		}
+	}
+
+	var playersToLiberal = make(map[string]Role)
+	var playersToFacists = make(map[string]Role)
+	pc := game.PlayerCount()
+	for _, player := range game.Players {
+		if player == nil {
+			continue
+		}
+		playersToLiberal[player.Name] = "unknown"
+		playersToFacists[player.Name] = player.Role
 	}
 
 	for _, player := range game.Players {
