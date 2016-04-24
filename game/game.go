@@ -39,9 +39,11 @@ type Game struct {
 	VetoRequested bool
 	State         Action
 
-	PresidentIndex int
-	President      *Player
-	Chancellor     *Player
+	PresidentIndex     int
+	PreviousPresident  *Player
+	PreviousChancellor *Player
+	President          *Player
+	Chancellor         *Player
 }
 
 // CreateGame creates a game with the default cards and max 10 players

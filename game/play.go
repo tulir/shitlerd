@@ -105,6 +105,7 @@ func (game *Game) NextPresident() {
 // SetPresident sets the new president
 func (game *Game) SetPresident(player *Player) {
 	game.State = ActPickChancellor
+	game.PreviousPresident = game.President
 	game.President = player
 	game.Broadcast(President{Type: TypePresident, Name: game.President.Name})
 }
@@ -112,7 +113,7 @@ func (game *Game) SetPresident(player *Player) {
 // PickChancellor is called when the president picks his/her chancellor
 func (game *Game) PickChancellor(name string) {
 	p := game.GetPlayer(name)
-	if p != nil {
+	if p != nil && p.Alive && p != game.President && p != game.PreviousChancellor && (game.PlayerCount() == 5 || p != game.PreviousPresident) {
 		game.Chancellor = p
 		game.State = ActVote
 		game.Broadcast(StartVote{Type: TypeStartVote, President: game.President.Name, Chancellor: game.Chancellor.Name})
@@ -286,7 +287,7 @@ func (game *Game) Investigated(name string) {
 // SelectedPresident is called when the president selects the next president
 func (game *Game) SelectedPresident(name string) {
 	p := game.GetPlayer(name)
-	if p != nil {
+	if p != nil && p.Alive && p != game.President {
 		game.Broadcast(PresidentActionFinished{Type: TypePresidentSelected, President: game.President.Name, Name: p.Name})
 		game.SetPresident(p)
 	}
@@ -295,7 +296,7 @@ func (game *Game) SelectedPresident(name string) {
 // ExecutedPlayer is called when the president executes a player
 func (game *Game) ExecutedPlayer(name string) {
 	p := game.GetPlayer(name)
-	if p != nil {
+	if p != nil && p.Alive {
 		game.Broadcast(PresidentActionFinished{Type: TypeExecuted, President: game.President.Name, Name: p.Name})
 		p.Alive = false
 		if p.Role == RoleHitler {
