@@ -129,7 +129,7 @@ type Table struct {
 	Deck         int  `json:"deck"`
 	Discarded    int  `json:"discarded"`
 	TableLiberal int  `json:"tableLiberal"`
-	TableFacist  int  `json:"tableFacist"`
+	TableFascist int  `json:"tableFascist"`
 }
 
 // Enact is sent to the clients when the president and chancellor have enacted a policy

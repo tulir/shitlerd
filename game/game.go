@@ -167,8 +167,8 @@ func (game *Game) Liberals() int {
 	return -1
 }
 
-// Facists returns the recommended amount of facist players
-func (game *Game) Facists() int {
+// Fascists returns the recommended amount of fascist players
+func (game *Game) Fascists() int {
 	liberals := game.Liberals()
 	if liberals == -1 {
 		return -1
@@ -192,7 +192,7 @@ func (game *Game) BroadcastTable() {
 		Deck:         len(game.Cards.Deck),
 		Discarded:    len(game.Cards.Discarded),
 		TableLiberal: game.Cards.TableLiberal,
-		TableFacist:  game.Cards.TableFacist,
+		TableFascist: game.Cards.TableFascist,
 	})
 }
 
@@ -243,7 +243,7 @@ func (player *Player) ReceiveMessage(msg map[string]string) {
 		((game.President == player && game.State == ActDiscardPresident) ||
 			(game.Chancellor == player && game.State == ActDiscardChancellor)) {
 		game.DiscardCard(msg["index"])
-	} else if msg["type"] == TypeVetoRequest.String() && game.Chancellor == player && game.State == ActDiscardChancellor && game.Cards.TableFacist >= 5 {
+	} else if msg["type"] == TypeVetoRequest.String() && game.Chancellor == player && game.State == ActDiscardChancellor && game.Cards.TableFascist >= 5 {
 		game.VetoRequest()
 	} else if msg["type"] == TypeVetoAccept.String() && game.President == player && game.VetoRequested {
 		game.VetoAccept()

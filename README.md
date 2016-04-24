@@ -34,7 +34,7 @@ Messages that the server receives at the wrong time or from the wrong user are i
   * Field `name` - The name of the chancellor to pick.
 * Type `discard` - Discard a card.
   * Field `index` - The index of the card (from the cards the server sent the client).
-* Type `vetorequest` - Request veto. There must be 5 facist cards on the table.
+* Type `vetorequest` - Request veto. There must be 5 fascist cards on the table.
 * Type `vetoaccept` - Accept veto request. The chancellor must have requested a veto first.
 * Type `investigate`, `execute`, `presidentselect` - Sent by the president when he/she performs a special action. The special action `peek` requires no answer.
   * Field `name` - The person the action is performed on.
@@ -61,18 +61,18 @@ Messages that the server receives at the wrong time or from the wrong user are i
 * Type `chancellordiscard` - The president has discarded one card and the chancellor has received the remaining two.
   * Field `name` - The name of the chancellor.
 * Type `cards` - Two or three cards, one of which must be discarded.
-  * Field `cards` - An array of strings. A string will either be `liberal` or `facist`. Fuck you if you can't figure out which string means which card.
+  * Field `cards` - An array of strings. A string will either be `liberal` or `fascist`. Fuck you if you can't figure out which string means which card.
 * Type `table` - The current status of the table.
   * Field `deck` - The number of cards in the deck.
   * Field `discarded` - The number of discarded cards.
   * Field `tableLiberal` - The number of liberal cards on the table.
-  * Field `tableFacist` - The number of facist cards on the table.
+  * Field `tableFascist` - The number of fascist cards on the table.
 * Type `enact` - The president and chancellor have both discarded a card and the remaining card is enacted.
   * Field `president` - The name of the president.
   * Field `chancellor` - The name of the chancellor.
-  * Field `policy` - The policy of the card they enacted (`liberal` or `facist`)
+  * Field `policy` - The policy of the card they enacted (`liberal` or `fascist`)
 * Type `enactforce` - Three failed elections or vetos have occured and the first card in the deck is forcefully enacted.
-  * Field `policy` - The policy of the card enacted (`liberal` or `facist`)
+  * Field `policy` - The policy of the card enacted (`liberal` or `fascist`)
 * Types `vetorequest`, `vetoaccept` - The chancellor has requested or the president has accepted to veto the current pick.
   * Field `president` - The name of the president.
   * Field `chancellor` - The name of the chancellor.
@@ -82,7 +82,7 @@ Messages that the server receives at the wrong time or from the wrong user are i
   * Field `cards` - The top three cards from the deck.
 * Type `investigateresult` - The result of the investigation.
   * Field `name` - The name of the player who was investigated
-  * Field `result` - The party of the player (`liberal` or `facist`). Hitler is a facist too.
+  * Field `result` - The party of the player (`liberal` or `fascist`). Hitler is a fascist too.
 * Type `investigated`, `presidentselected`, `executed` - Broadcasted once the president has completed a special action.
   * There is no broadcast for the action `peek`, since the game goes on instantly after the president receives the peek cards.
   * Field `president` - The name of the president.
@@ -90,5 +90,5 @@ Messages that the server receives at the wrong time or from the wrong user are i
 * Type `error` - The server has encountered an internal error and the game has been terminated.
   * Field `message` - A human-readable error message.
 * Type `end` - The game has naturally ended.
-  * Field `winner` - The side that won (`liberal` or `facist`).
+  * Field `winner` - The side that won (`liberal` or `fascist`).
   * Field `roles` - A map of the roles of all players.

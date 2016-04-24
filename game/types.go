@@ -43,7 +43,7 @@ func (game *Game) GetSpecialAction() Action {
 	case 5:
 		fallthrough
 	case 6:
-		switch game.Cards.TableFacist {
+		switch game.Cards.TableFascist {
 		case 3:
 			return ActPolicyPeek
 		case 4:
@@ -54,7 +54,7 @@ func (game *Game) GetSpecialAction() Action {
 	case 7:
 		fallthrough
 	case 8:
-		switch game.Cards.TableFacist {
+		switch game.Cards.TableFascist {
 		case 2:
 			return ActInvestigatePlayer
 		case 3:
@@ -67,7 +67,7 @@ func (game *Game) GetSpecialAction() Action {
 	case 9:
 		fallthrough
 	case 10:
-		switch game.Cards.TableFacist {
+		switch game.Cards.TableFascist {
 		case 1:
 			return ActInvestigatePlayer
 		case 2:
@@ -111,10 +111,10 @@ type Role string
 // Card gets the card corresponding to the given role
 func (role Role) Card() Card {
 	switch role {
-	case RoleFacist:
+	case RoleFascist:
 		fallthrough
 	case RoleHitler:
-		return CardFacist
+		return CardFascist
 	default:
 		return CardLiberal
 	}
@@ -123,6 +123,6 @@ func (role Role) Card() Card {
 // The possible roles
 const (
 	RoleLiberal Role = "liberal"
-	RoleFacist  Role = "facist"
+	RoleFascist Role = "fascist"
 	RoleHitler  Role = "hitler"
 )

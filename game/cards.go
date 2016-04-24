@@ -22,30 +22,30 @@ type Cards struct {
 	Deck         []Card
 	Discarded    []Card
 	TableLiberal int
-	TableFacist  int
+	TableFascist int
 }
 
-// Card is a single card (facist or liberal)
+// Card is a single card (fascist or liberal)
 type Card string
 
 // The possible card types
 const (
 	CardLiberal Card = "liberal"
-	CardFacist  Card = "facist"
+	CardFascist Card = "fascist"
 )
 
-// CreateDeck creates a Cards object with 6 liberal and 11 facist cards in the deck
+// CreateDeck creates a Cards object with 6 liberal and 11 fascist cards in the deck
 func CreateDeck() *Cards {
-	var cards = &Cards{Deck: make([]Card, 17), Discarded: []Card{}, TableLiberal: 0, TableFacist: 0}
+	var cards = &Cards{Deck: make([]Card, 17), Discarded: []Card{}, TableLiberal: 0, TableFascist: 0}
 	liberal := 6
-	facist := 11
+	fascist := 11
 	for i := 0; i < 17; i++ {
-		if liberal == 0 && facist == 0 {
+		if liberal == 0 && fascist == 0 {
 			break
 		} else if liberal == 0 {
-			cards.Deck[i] = CardFacist
-			facist--
-		} else if facist == 0 {
+			cards.Deck[i] = CardFascist
+			fascist--
+		} else if fascist == 0 {
 			cards.Deck[i] = CardLiberal
 			liberal--
 		} else {
@@ -53,8 +53,8 @@ func CreateDeck() *Cards {
 				cards.Deck[i] = CardLiberal
 				liberal--
 			} else {
-				cards.Deck[i] = CardFacist
-				facist--
+				cards.Deck[i] = CardFascist
+				fascist--
 			}
 		}
 	}

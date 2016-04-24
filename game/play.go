@@ -30,7 +30,7 @@ func (game *Game) Start() {
 
 	game.PresidentIndex = r.Intn(len(game.Players))
 
-	facistsAvailable := game.Facists()
+	fascistsAvailable := game.Fascists()
 	liberalsAvailable := game.Liberals()
 	hitlerAvailable := true
 
@@ -39,14 +39,14 @@ func (game *Game) Start() {
 			continue
 		}
 		var availableRoles []Role
-		if !hitlerAvailable && facistsAvailable == 0 {
+		if !hitlerAvailable && fascistsAvailable == 0 {
 			availableRoles = []Role{RoleLiberal}
 		} else if !hitlerAvailable {
-			availableRoles = []Role{RoleLiberal, RoleFacist}
-		} else if facistsAvailable == 0 {
+			availableRoles = []Role{RoleLiberal, RoleFascist}
+		} else if fascistsAvailable == 0 {
 			availableRoles = []Role{RoleLiberal, RoleHitler}
 		} else {
-			availableRoles = []Role{RoleLiberal, RoleFacist, RoleHitler}
+			availableRoles = []Role{RoleLiberal, RoleFascist, RoleHitler}
 		}
 
 		player.Role = availableRoles[r.Intn(len(availableRoles))]
@@ -54,22 +54,22 @@ func (game *Game) Start() {
 		switch player.Role {
 		case RoleLiberal:
 			liberalsAvailable--
-		case RoleFacist:
-			facistsAvailable--
+		case RoleFascist:
+			fascistsAvailable--
 		case RoleHitler:
 			hitlerAvailable = false
 		}
 	}
 
 	var playersToLiberal = make(map[string]Role)
-	var playersToFacists = make(map[string]Role)
+	var playersToFascists = make(map[string]Role)
 	pc := game.PlayerCount()
 	for _, player := range game.Players {
 		if player == nil {
 			continue
 		}
 		playersToLiberal[player.Name] = "unknown"
-		playersToFacists[player.Name] = player.Role
+		playersToFascists[player.Name] = player.Role
 	}
 
 	for _, player := range game.Players {
@@ -78,8 +78,8 @@ func (game *Game) Start() {
 		}
 		if player.Role == RoleLiberal || (pc > 6 && player.Role == RoleHitler) {
 			player.SendMessage(Start{Type: TypeStart, Role: player.Role, Players: playersToLiberal})
-		} else if player.Role == RoleFacist || (pc < 7 && player.Role == RoleHitler) {
-			player.SendMessage(Start{Type: TypeStart, Role: player.Role, Players: playersToFacists})
+		} else if player.Role == RoleFascist || (pc < 7 && player.Role == RoleHitler) {
+			player.SendMessage(Start{Type: TypeStart, Role: player.Role, Players: playersToFascists})
 		}
 	}
 	game.NextPresident()
@@ -174,9 +174,9 @@ func (game *Game) ThreeGovsFailed() {
 
 // StartDiscard is executed when everyone has voted and accepted the president
 func (game *Game) StartDiscard() {
-	if game.Cards.TableFacist >= 3 {
+	if game.Cards.TableFascist >= 3 {
 		if game.Chancellor.Role == RoleHitler {
-			game.End(CardFacist)
+			game.End(CardFascist)
 			return
 		}
 	}
@@ -236,14 +236,14 @@ func (game *Game) VetoAccept() {
 // Enact is called when a card is enacted
 func (game *Game) Enact(card Card, force bool) {
 	switch card {
-	case CardFacist:
-		game.Cards.TableFacist++
+	case CardFascist:
+		game.Cards.TableFascist++
 	case CardLiberal:
 		game.Cards.TableLiberal++
 	}
 	game.BroadcastTable()
-	if game.Cards.TableFacist >= 6 {
-		game.End(CardFacist)
+	if game.Cards.TableFascist >= 6 {
+		game.End(CardFascist)
 		return
 	} else if game.Cards.TableLiberal >= 5 {
 		game.End(CardLiberal)
