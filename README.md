@@ -3,7 +3,7 @@ A server to handle online Secret Hitler games.
 
 ## API
 ### Creating a game
-You can create a game by making a POST request to `/create`. This will simply return the name of the newly created game.
+You can create a game by making a GET request to `/create`. This will simply return the name of the newly created game.
 
 ### Connecting
 The connection is made using WebSockets. The primary (currently the only) socket is at `/socket`.
