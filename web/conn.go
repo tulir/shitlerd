@@ -62,7 +62,9 @@ func (c *connection) readPump() {
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) {
 				fmt.Println("Unexpected close:", err)
-				c.p.Disconnect()
+				if c.p != nil {
+					c.p.Disconnect()
+				}
 			}
 			break
 		}
