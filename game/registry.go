@@ -17,6 +17,10 @@
 // Package game contains the game management code
 package game
 
+import (
+	"strings"
+)
+
 var registry map[string]*Game
 
 func init() {
@@ -26,22 +30,24 @@ func init() {
 // New creates a game and adds it to the registry
 func New() string {
 	name := RandomName()
-	if game, ok := registry[name]; ok && game != nil && !game.Ended {
+	lcName := strings.ToLower(name)
+	if game, ok := registry[lcName]; ok && game != nil && !game.Ended {
 		name = RandomName()
 	}
 	game := CreateGame(name)
-	registry[name] = game
+	registry[lcName] = game
 	return name
 }
 
 // Get the game with the given name from the registry
 func Get(name string) (*Game, bool) {
-	game, ok := registry[name]
+	game, ok := registry[strings.ToLower(name)]
 	return game, ok
 }
 
 // Remove a game from the registry
 func Remove(name string) bool {
+	name = strings.ToLower(name)
 	_, ok := registry[name]
 	if !ok {
 		return false
