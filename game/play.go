@@ -82,6 +82,7 @@ func (game *Game) Start() {
 			player.SendMessage(Start{Type: TypeStart, Role: player.Role, Players: playersToFascists})
 		}
 	}
+	game.BroadcastTable()
 	game.NextPresident()
 }
 
