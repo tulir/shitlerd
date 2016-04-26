@@ -78,8 +78,7 @@ func (c *connection) readPump() {
 
 		if c.p == nil {
 			if data["type"] == "join" {
-				val := c.join(data)
-				c.ch <- val
+				c.ch <- c.join(data)
 			}
 			continue
 		}
