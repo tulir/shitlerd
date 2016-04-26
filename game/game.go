@@ -67,11 +67,12 @@ func (game *Game) Join(name, authtoken string, conn Connection) (int, *Player) {
 	}
 	for i, player := range game.Players {
 		if player == nil {
-			game.Players[i] = &Player{Name: name, AuthToken: game.createAuthToken(), Connected: true, Alive: true, Vote: VoteEmpty, Conn: conn, Game: game}
 			game.Broadcast(JoinQuit{Type: TypeJoin, Name: name})
+			game.Players[i] = &Player{Name: name, AuthToken: game.createAuthToken(), Connected: true, Alive: true, Vote: VoteEmpty, Conn: conn, Game: game}
 			return i, game.Players[i]
 		} else if player.Name == name {
 			if player.AuthToken == authtoken {
+				player.Game.Broadcast(JoinQuit{Type: TypeConnected, Name: player.Name})
 				if player.Conn != nil {
 					player.SendMessage("connected-other")
 					player.Conn.Close()
@@ -221,11 +222,6 @@ func (player *Player) SendMessage(msg interface{}) {
 	if player.Conn != nil {
 		player.Conn.SendMessage(msg)
 	}
-}
-
-// JoinBroadcast broadcasts the players join message
-func (player *Player) JoinBroadcast() {
-	player.Game.Broadcast(JoinQuit{Type: TypeConnected, Name: player.Name})
 }
 
 // ReceiveMessage should be called by the connection when the client sends a message

@@ -79,9 +79,6 @@ func (c *connection) readPump() {
 		if c.p == nil {
 			if data["type"] == "join" {
 				c.ch <- c.join(data)
-				if c.p != nil {
-					c.p.JoinBroadcast()
-				}
 			}
 			continue
 		}
