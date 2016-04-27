@@ -35,9 +35,9 @@ type Game struct {
 	Started    bool
 	Ended      bool
 
-	FailedGovs    int
 	VetoRequested bool
 	State         Action
+	FailedGovs    int
 
 	PresidentIndex     int
 	PreviousPresident  *Player
