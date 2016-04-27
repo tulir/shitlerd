@@ -115,6 +115,7 @@ func (game *Game) SetPresident(player *Player) {
 func (game *Game) PickChancellor(name string) {
 	p := game.GetPlayer(name)
 	if p != nil && p.Alive && p != game.President && p != game.PreviousChancellor && (game.PlayerCount() == 5 || p != game.PreviousPresident) {
+		game.PreviousChancellor = game.Chancellor
 		game.Chancellor = p
 		game.State = ActVote
 		game.Broadcast(StartVote{Type: TypeStartVote, President: game.President.Name, Chancellor: game.Chancellor.Name})
@@ -152,7 +153,6 @@ func (game *Game) Vote(player *Player, vote string) {
 		game.StartDiscard()
 	} else {
 		game.GovernmentFailed(false)
-
 	}
 }
 
