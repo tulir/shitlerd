@@ -92,3 +92,6 @@ Messages that the server receives at the wrong time or from the wrong user are i
 * Type `end` - The game has naturally ended.
   * Field `winner` - The side that won (`liberal` or `fascist`).
   * Field `roles` - A map of the roles of all players.
+
+# Attribution
+["Secret Hitler"](http://secrethitler.com/) is a game designed by Max Temkin, Mike Boxleiter, Tommy Maranges, and Mackenzie Schubert. This adaptation is neither affiliated with, nor endorsed by the copyright holders.
