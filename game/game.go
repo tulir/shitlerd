@@ -20,10 +20,14 @@ package game
 import (
 	crand "crypto/rand"
 	"encoding/base64"
+	"flag"
+	"fmt"
 	"math/rand"
+	"os"
 	"time"
 )
 
+var debug = flag.Bool("debug", false, "Print gameplay debug/log messages")
 var r = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 // Game contains a single Secret Hitler game
@@ -215,6 +219,7 @@ func (player *Player) Disconnect() {
 	player.Connected = false
 	player.Conn = nil
 	player.Game.Broadcast(JoinQuit{Type: TypeDisconnected, Name: player.Name})
+	outln(player.Name, "has disconnected from", player.Game.Name)
 }
 
 // SendMessage sends a message to the client
@@ -234,6 +239,7 @@ func (player *Player) ReceiveMessage(msg map[string]string) {
 	}
 
 	if !game.Started || game.Ended || !player.Alive {
+		errln(player.Name, "tried to send a", msg["type"], "message! Started:", game.Started, "Ended:", game.Ended, "Alive:", player.Alive)
 		return
 	}
 
@@ -262,4 +268,32 @@ func (player *Player) ReceiveMessage(msg map[string]string) {
 type Connection interface {
 	SendMessage(msg interface{})
 	Close()
+}
+
+func outln(msg ...interface{}) {
+	os.Stderr.WriteString("[Game] ")
+	fmt.Fprintln(os.Stdout, msg...)
+}
+
+func outf(msg string, args ...interface{}) {
+	os.Stderr.WriteString("[Game] ")
+	fmt.Fprintf(os.Stdout, msg, args...)
+}
+
+func outfp(msg string, args ...interface{}) {
+	fmt.Fprintf(os.Stdout, msg, args...)
+}
+
+func errln(msg ...interface{}) {
+	os.Stderr.WriteString("[Game] ")
+	fmt.Fprintln(os.Stderr, msg...)
+}
+
+func errf(msg string, args ...interface{}) {
+	os.Stderr.WriteString("[Game] ")
+	fmt.Fprintf(os.Stderr, msg, args...)
+}
+
+func errfp(msg string, args ...interface{}) {
+	fmt.Fprintf(os.Stderr, msg, args...)
 }
