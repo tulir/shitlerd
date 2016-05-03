@@ -236,6 +236,8 @@ func (player *Player) ReceiveMessage(msg map[string]string) {
 		game.Broadcast(Chat{Type: TypeChat, Sender: player.Name, Message: msg["message"]})
 	} else if msg["type"] == TypeStart.String() && !game.Started && game.PlayerCount() >= 5 {
 		game.Start()
+	} else if msg["type"] == TypeQuit.String() {
+		game.Leave(player.Name)
 	}
 
 	if !game.Started || game.Ended || !player.Alive {

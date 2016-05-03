@@ -27,6 +27,7 @@ Messages that the server receives at the wrong time or from the wrong user are i
 #### Client -> server messages
 * Type `chat` - A chat message.
   * Field `message` - The message to send.
+* Type `quit` - The player has intentionally left the game.
 * Type `start` - Tell the server to start the game. Ignored if the game is already started or has less than 5 players.
 * Type `vote` - Vote for a president+chancellor combination. Ignored if the game isn't in a voting state.
   * Field `vote` - The vote value, `ja` or `nein`.
