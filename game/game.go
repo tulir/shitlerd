@@ -59,15 +59,8 @@ func CreateGame(name string) *Game {
 func (game *Game) Join(name, authtoken string, conn Connection) (int, *Player) {
 	if game.Started && len(authtoken) == 0 {
 		return -3, nil
-	} else if len(name) < 3 || len(name) > 16 {
+	} else if !validName(name) {
 		return -4, nil
-	} else {
-		for _, c := range name {
-			if (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '-' || c == '_' {
-				continue
-			}
-			return -4, nil
-		}
 	}
 	for i, player := range game.Players {
 		if player == nil {
@@ -89,6 +82,27 @@ func (game *Game) Join(name, authtoken string, conn Connection) (int, *Player) {
 		}
 	}
 	return -1, nil
+}
+
+func validName(name string) bool {
+	return validNameLength(name) && validNameChars(name)
+}
+
+func validNameLength(name string) bool {
+	if len(name) < 3 || len(name) > 16 {
+		return false
+	}
+	return true
+}
+
+func validNameChars(name string) bool {
+	for _, c := range name {
+		if (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '-' || c == '_' {
+			continue
+		}
+		return false
+	}
+	return true
 }
 
 // Leave the given player
