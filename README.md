@@ -10,7 +10,7 @@ The connection is made using WebSockets. The primary (currently the only) socket
 
 Once connected, the client must send a join message in JSON format. The message must contain at least the fields `type` with the value `join`, `game` with the name of the game (case-insensitive) and `name` with the username of the client. The join message may also contain the field `authtoken` which should contain the token to retake a username (after a disconnection, for example).
 
-The response for the join message will contain at least the field `success`. If true, the response should also contain `authtoken` which can be used to rejoin with the same name. If unsuccessful, the response will contain the field `message` with a simple error code.
+The response for the join message will contain at least the field `success`. If true, the response should also contain `authtoken` which can be used to rejoin with the same name. If unsuccessful, the response will contain the field `message` with a simple error code. The response will also contain the field `game` which is the given `game` field if the game wasn't found or the game name in the original case.
 
 Possible errors:
 * `gamenotfound` - The given game does not exist (see the section Creating a game)
