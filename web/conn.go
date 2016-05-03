@@ -174,7 +174,9 @@ func (c *connection) join(data map[string]string) (response map[string]interface
 		response["authtoken"] = p.AuthToken
 		players := make(map[string]bool)
 		for _, p := range g.Players {
-			players[p.Name] = p.Connected
+			if p != nil {
+				players[p.Name] = p.Connected
+			}
 		}
 		response["players"] = players
 	}
