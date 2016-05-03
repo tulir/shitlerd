@@ -141,16 +141,19 @@ func (c *connection) join(data map[string]string) (response map[string]interface
 		response["success"] = false
 		response["message"] = "gamenotfound"
 		response["game"] = data["game"]
+		response["name"] = data["name"]
 		return
 	}
+
 	response["game"] = g.Name
-	authtoken, authOk := data["authtoken"]
-	if g.Started && !authOk {
-		response["success"] = false
-		response["message"] = "gamestarted"
-	}
+	authtoken, _ := data["authtoken"]
 
 	state, p := g.Join(data["name"], authtoken, c)
+	if p != nil {
+		response["name"] = p.Name
+	} else {
+		response["name"] = data["name"]
+	}
 
 	switch state {
 	case -1:
