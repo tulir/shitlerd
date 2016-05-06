@@ -52,7 +52,6 @@ type Game struct {
 
 // CreateGame creates a game with the default cards and max 10 players
 func CreateGame(name string) *Game {
-	debugln(name, "created")
 	return &Game{Name: name, Players: make([]*Player, 10), Cards: CreateDeck()}
 }
 
@@ -66,13 +65,13 @@ func (game *Game) Join(name, authtoken string, conn Connection) (int, *Player) {
 	for i, player := range game.Players {
 		if player == nil {
 			game.Broadcast(JoinQuit{Type: TypeJoin, Name: name})
-			debugln(player.Name, "joined", player.Game.Name)
+			game.debugln(player.Name, "joined the game")
 			game.Players[i] = &Player{Name: name, AuthToken: game.createAuthToken(), Connected: true, Alive: true, Vote: VoteEmpty, Conn: conn, Game: game}
 			return i, game.Players[i]
 		} else if player.Name == name {
 			if player.AuthToken == authtoken {
 				player.Game.Broadcast(JoinQuit{Type: TypeConnected, Name: player.Name})
-				debugln(player.Name, "has reconnected to", player.Game.Name)
+				game.debugln(player.Name, "reconnected")
 				if player.Conn != nil {
 					player.SendMessage("connected-other")
 					player.Conn.Close()
@@ -118,7 +117,7 @@ func (game *Game) Leave(name string) {
 				game.Players[i].Alive = false
 			}
 			game.Broadcast(JoinQuit{Type: TypeQuit, Name: name})
-			debugln(player.Name, "left", player.Game.Name)
+			game.debugln(player.Name, "left the game")
 		}
 	}
 }
@@ -237,7 +236,7 @@ func (player *Player) Disconnect() {
 	player.Connected = false
 	player.Conn = nil
 	player.Game.Broadcast(JoinQuit{Type: TypeDisconnected, Name: player.Name})
-	debugln(player.Name, "has disconnected from", player.Game.Name)
+	game.debugln(player.Name, "disconnected")
 }
 
 // SendMessage sends a message to the client
@@ -253,12 +252,15 @@ func (player *Player) ReceiveMessage(msg map[string]string) {
 	if msg["type"] == TypeChat.String() && player.Alive {
 		game.Broadcast(Chat{Type: TypeChat, Sender: player.Name, Message: msg["message"]})
 	} else if msg["type"] == TypeStart.String() && !game.Started && game.PlayerCount() >= 5 {
-		debugln(player.Name, "requested", game.Name, "to start")
+		game.debugln(player.Name, "requested the game to start")
 		game.Start()
 	} else if msg["type"] == TypeQuit.String() {
 		game.Leave(player.Name)
 	} else if !game.Started || game.Ended || !player.Alive {
-		debugln(player.Name, "tried to send a", msg["type"], "message! Started:", game.Started, "Ended:", game.Ended, "Alive:", player.Alive)
+		game.debugln(player.Name, "tried to send a", msg["type"], "message!")
+		game.debugln("  Game started:", game.Started)
+		game.debugln("  Game ended:", game.Ended)
+		game.debugln("  Player alive:", player.Alive)
 		return
 	} else {
 		player.ReceiveGameMessage(msg)
