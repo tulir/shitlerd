@@ -252,30 +252,32 @@ func (player *Player) ReceiveMessage(msg map[string]string) {
 		game.Start()
 	} else if msg["type"] == TypeQuit.String() {
 		game.Leave(player.Name)
-	}
-
-	if !game.Started || game.Ended || !player.Alive {
+	} else if !game.Started || game.Ended || !player.Alive {
 		errln(player.Name, "tried to send a", msg["type"], "message! Started:", game.Started, "Ended:", game.Ended, "Alive:", player.Alive)
 		return
+	} else {
+		player.ReceiveGameMessage(msg)
 	}
+}
 
-	if msg["type"] == TypeVote.String() && game.State == ActVote {
+// ReceiveGameMessage is called from ReceiveMessage when the received message is directly related to the ongoing game.
+func (player *Player) ReceiveGameMessage(msg map[string]string) {
+	game := player.Game
+	if msg["type"] == TypeVote.String() && TypeVote.ReceiveRequirements(player) {
 		game.Vote(player, msg["vote"])
-	} else if msg["type"] == TypePickChancellor.String() && game.President == player && game.State == ActPickChancellor {
+	} else if msg["type"] == TypePickChancellor.String() && TypePickChancellor.ReceiveRequirements(player) {
 		game.PickChancellor(msg["name"])
-	} else if msg["type"] == TypeDiscard.String() &&
-		((game.President == player && game.State == ActDiscardPresident) ||
-			(game.Chancellor == player && game.State == ActDiscardChancellor)) {
+	} else if msg["type"] == TypeDiscard.String() && TypeDiscard.ReceiveRequirements(player) {
 		game.DiscardCard(msg["index"])
-	} else if msg["type"] == TypeVetoRequest.String() && game.Chancellor == player && game.State == ActDiscardChancellor && game.Cards.TableFascist >= 5 {
+	} else if msg["type"] == TypeVetoRequest.String() && TypeVetoRequest.ReceiveRequirements(player) {
 		game.VetoRequest()
-	} else if msg["type"] == TypeVetoAccept.String() && game.President == player && game.VetoRequested {
+	} else if msg["type"] == TypeVetoAccept.String() && TypeVetoAccept.ReceiveRequirements(player) {
 		game.VetoAccept()
-	} else if msg["type"] == TypePresidentSelect.String() && game.President == player && game.State == ActSelectPresident {
+	} else if msg["type"] == TypePresidentSelect.String() && TypePresidentSelect.ReceiveRequirements(player) {
 		game.SelectedPresident(msg["name"])
-	} else if msg["type"] == TypeExecute.String() && game.President == player && game.State == ActExecution {
+	} else if msg["type"] == TypeExecute.String() && TypeExecute.ReceiveRequirements(player) {
 		game.ExecutedPlayer(msg["name"])
-	} else if msg["type"] == TypeInvestigate.String() && game.President == player && game.State == ActInvestigatePlayer {
+	} else if msg["type"] == TypeInvestigate.String() && TypeInvestigate.ReceiveRequirements(player) {
 		game.Investigated(msg["name"])
 	}
 }
