@@ -251,7 +251,7 @@ func (player *Player) ReceiveMessage(msg map[string]string) {
 	game := player.Game
 	if msg["type"] == TypeChat.String() && player.Alive {
 		game.Broadcast(Chat{Type: TypeChat, Sender: player.Name, Message: msg["message"]})
-	} else if msg["type"] == TypeStart.String() && !game.Started && game.PlayerCount() >= 5 {
+	} else if msg["type"] == TypeStart.String() && !game.Started && game.ConnectedPlayers() >= 5 {
 		game.debugln(player.Name, "requested the game to start")
 		game.Start()
 	} else if msg["type"] == TypeQuit.String() {

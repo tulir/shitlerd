@@ -23,8 +23,13 @@ import (
 
 // Start the game already!
 func (game *Game) Start() {
-	if game.PlayerCount() < 5 {
+	if game.ConnectedPlayers() < 5 {
 		return
+	}
+	for _, p := range game.Players {
+		if p != nil && !p.Connected {
+			game.Leave(p.Name)
+		}
 	}
 	game.debugln("Starting...")
 	game.Started = true
