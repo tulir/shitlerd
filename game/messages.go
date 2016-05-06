@@ -24,6 +24,31 @@ func (typ Type) String() string {
 	return string(typ)
 }
 
+// ReceiveRequirements checks if the given player is in a state where he/she is allowed to send a command of this type
+func (typ Type) ReceiveRequirements(player *Player) bool {
+	game := player.Game
+	switch typ {
+	case TypeVote:
+		return game.State == ActVote
+	case TypePickChancellor:
+		return game.President == player && game.State == ActPickChancellor
+	case TypeDiscard:
+		return (game.President == player && game.State == ActDiscardPresident) || (game.Chancellor == player && game.State == ActDiscardChancellor)
+	case TypeVetoRequest:
+		return game.Chancellor == player && game.State == ActDiscardChancellor && game.Cards.TableFascist >= 5
+	case TypeVetoAccept:
+		return game.President == player && game.VetoRequested
+	case TypePresidentSelect:
+		return game.President == player && game.State == ActSelectPresident
+	case TypeExecute:
+		return game.President == player && game.State == ActExecution
+	case TypeInvestigate:
+		return game.President == player && game.State == ActInvestigatePlayer
+	default:
+		return false
+	}
+}
+
 // The possible message types
 const (
 	TypeChat              Type = "chat"
