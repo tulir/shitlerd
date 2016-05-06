@@ -236,7 +236,7 @@ func (player *Player) Disconnect() {
 	player.Connected = false
 	player.Conn = nil
 	player.Game.Broadcast(JoinQuit{Type: TypeDisconnected, Name: player.Name})
-	game.debugln(player.Name, "disconnected")
+	player.Game.debugln(player.Name, "disconnected")
 }
 
 // SendMessage sends a message to the client
@@ -318,7 +318,7 @@ func (game *Game) debugfln(msg string, args ...interface{}) {
 
 func (game *Game) debug(parts ...interface{}) {
 	if *dbg {
-		fmt.Fprint(os.Stdout, "[Game/%s] ", game.Name)
+		fmt.Fprintf(os.Stdout, "[Game/%s] ", game.Name)
 		fmt.Fprint(os.Stdout, parts...)
 	}
 }
