@@ -43,44 +43,65 @@ func (game *Game) GetSpecialAction() Action {
 	case 5:
 		fallthrough
 	case 6:
-		switch game.Cards.TableFascist {
-		case 3:
-			return ActPolicyPeek
-		case 4:
-			return ActExecution
-		case 5:
-			return ActExecution
-		}
+		return game.SmallGameSpecial()
 	case 7:
 		fallthrough
 	case 8:
-		switch game.Cards.TableFascist {
-		case 2:
-			return ActInvestigatePlayer
-		case 3:
-			return ActSelectPresident
-		case 4:
-			return ActExecution
-		case 5:
-			return ActExecution
-		}
+		return game.MediumGameSpecial()
 	case 9:
 		fallthrough
 	case 10:
-		switch game.Cards.TableFascist {
-		case 1:
-			return ActInvestigatePlayer
-		case 2:
-			return ActInvestigatePlayer
-		case 3:
-			return ActSelectPresident
-		case 4:
-			return ActExecution
-		case 5:
-			return ActExecution
-		}
+		return game.LargeGameSpecial()
 	}
 	return ActNothing
+}
+
+// SmallGameSpecial gets the next special action for small games (5-6 players)
+func (game *Game) SmallGameSpecial() Action {
+	switch game.Cards.TableFascist {
+	case 3:
+		return ActPolicyPeek
+	case 4:
+		return ActExecution
+	case 5:
+		return ActExecution
+	default:
+		return ActNothing
+	}
+}
+
+// MediumGameSpecial gets the next special action for medium games (7-8 players)
+func (game *Game) MediumGameSpecial() Action {
+	switch game.Cards.TableFascist {
+	case 2:
+		return ActInvestigatePlayer
+	case 3:
+		return ActSelectPresident
+	case 4:
+		return ActExecution
+	case 5:
+		return ActExecution
+	default:
+		return ActNothing
+	}
+}
+
+// LargeGameSpecial gets the next special action for large games (9-10 players)
+func (game *Game) LargeGameSpecial() Action {
+	switch game.Cards.TableFascist {
+	case 1:
+		return ActInvestigatePlayer
+	case 2:
+		return ActInvestigatePlayer
+	case 3:
+		return ActSelectPresident
+	case 4:
+		return ActExecution
+	case 5:
+		return ActExecution
+	default:
+		return ActNothing
+	}
 }
 
 // Vote is a simple yes/no vote
