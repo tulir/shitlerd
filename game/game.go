@@ -258,9 +258,9 @@ func (player *Player) ReceiveMessage(msg map[string]string) {
 		game.Leave(player.Name)
 	} else if !game.Started || game.Ended || !player.Alive {
 		game.debugln(player.Name, "tried to send a", msg["type"], "message!")
-		game.debugln("  Game started:", game.Started)
-		game.debugln("  Game ended:", game.Ended)
+		game.debugln("  Game started/ended:", game.Started, game.Ended)
 		game.debugln("  Player alive:", player.Alive)
+		game.debugln("  Players joined/alive/connected", game.PlayerCount(), game.PlayersInGame(), game.ConnectedPlayers())
 		return
 	} else {
 		player.ReceiveGameMessage(msg)
