@@ -63,10 +63,11 @@ func (c *connection) readPump() {
 	for {
 		_, message, err := c.ws.ReadMessage()
 		if err != nil {
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) {
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseNormalClosure) {
 				fmt.Println("Unexpected close:", err)
 				if c.p != nil {
 					c.p.Disconnect()
+					c.p = nil
 				}
 			}
 			break
@@ -114,6 +115,7 @@ func (c *connection) writePump() {
 				c.write(websocket.CloseMessage, []byte{})
 				if c.p != nil {
 					c.p.Disconnect()
+					c.p = nil
 				}
 				return
 			}
@@ -122,6 +124,7 @@ func (c *connection) writePump() {
 				fmt.Println("Disconnected:", err)
 				if c.p != nil {
 					c.p.Disconnect()
+					c.p = nil
 				}
 				return
 			}
@@ -130,6 +133,7 @@ func (c *connection) writePump() {
 			if err != nil {
 				if c.p != nil {
 					c.p.Disconnect()
+					c.p = nil
 				}
 				return
 			}
