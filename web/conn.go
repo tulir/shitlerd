@@ -31,8 +31,8 @@ var debug = flag.Bool("wsDebug", false, "Print WebSocket connection debug/log me
 
 const (
 	writeWait      = 10 * time.Second
-	pongWait       = 30 * time.Second
-	pingPeriod     = 25 * time.Second
+	pongWait       = 15 * time.Second
+	pingPeriod     = 10 * time.Second
 	maxMessageSize = 1024
 )
 
@@ -128,6 +128,9 @@ func (c *connection) writePump() {
 		case <-ticker.C:
 			err := c.write(websocket.PingMessage, []byte{})
 			if err != nil {
+				if c.p != nil {
+					c.p.Disconnect()
+				}
 				return
 			}
 		}
