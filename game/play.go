@@ -157,22 +157,11 @@ func (game *Game) Vote(player *Player, vote string) {
 	player.SendMessage(VoteMessage{Type: TypeVote, Vote: player.Vote})
 	game.debugln(player.Name, "voted", player.Vote)
 
-	var ja, nein = 0, 0
-	for _, player := range game.Players {
-		if player == nil || !player.Alive {
-			continue
-		}
-		switch player.Vote {
-		case VoteEmpty:
-			if player.Connected {
-				return
-			}
-		case VoteJa:
-			ja++
-		case VoteNein:
-			nein++
-		}
+	var ja, nein = game.CalculateVotes()
+	if ja == -1 || nein == -1 {
+		return
 	}
+
 	for _, player := range game.Players {
 		if player == nil {
 			continue
@@ -184,6 +173,26 @@ func (game *Game) Vote(player *Player, vote string) {
 	} else {
 		game.GovernmentFailed(false)
 	}
+}
+
+// CalculateVotes gets the amount of votes
+func (game *Game) CalculateVotes() (ja, nein int) {
+	for _, player := range game.Players {
+		if player == nil || !player.Alive {
+			continue
+		}
+		switch player.Vote {
+		case VoteEmpty:
+			if player.Connected {
+				return -1, -1
+			}
+		case VoteJa:
+			ja++
+		case VoteNein:
+			nein++
+		}
+	}
+	return
 }
 
 // GovernmentFailed is called when the government fails.
@@ -298,6 +307,11 @@ func (game *Game) Enact(card Card, force bool) {
 		game.NextPresident()
 		return
 	}
+	game.RunSpecialAction()
+}
+
+// RunSpecialAction runs the next special action
+func (game *Game) RunSpecialAction() {
 	act := game.GetSpecialAction()
 	switch act {
 	case ActPolicyPeek:
