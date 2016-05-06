@@ -26,12 +26,26 @@ func (game *Game) Start() {
 	if game.PlayerCount() < 5 {
 		return
 	}
+	game.debugln("Starting...")
 	game.Started = true
 
 	game.PresidentIndex = r.Intn(len(game.Players))
+	game.debugln("  President index:", game.PresidentIndex)
 
+	game.GiveRoles()
+	game.MapAndSendRoles()
+
+	game.BroadcastTable()
+	game.NextPresident()
+}
+
+// GiveRoles gives everyone roles (but doesn't send them yet)
+func (game *Game) GiveRoles() {
+	game.debugln("  Players:", game.PlayerCount())
 	fascistsAvailable := game.Fascists()
+	game.debugln("  Fascists:", fascistsAvailable)
 	liberalsAvailable := game.Liberals()
+	game.debugln("  Liberals:", liberalsAvailable)
 	hitlerAvailable := true
 
 	for _, player := range game.Players {
@@ -50,6 +64,7 @@ func (game *Game) Start() {
 		}
 
 		player.Role = availableRoles[r.Intn(len(availableRoles))]
+		game.debugln("   ", player.Name, "is a", player.Role)
 
 		switch player.Role {
 		case RoleLiberal:
@@ -60,34 +75,41 @@ func (game *Game) Start() {
 			hitlerAvailable = false
 		}
 	}
+}
 
-	var playersToLiberal = make(map[string]Role)
-	var playersToFascists = make(map[string]Role)
+// MapRoles maps the info about others' roles that must be sent to players with specific roles
+func (game *Game) MapRoles() (toLiberals map[string]Role, toFascists map[string]Role) {
+	toLiberals = make(map[string]Role)
+	toFascists = make(map[string]Role)
+	for _, player := range game.Players {
+		if player == nil {
+			continue
+		}
+		toLiberals[player.Name] = "unknown"
+		toFascists[player.Name] = player.Role
+	}
+	return
+}
+
+// MapAndSendRoles sends a start message to players containing their roles and possibly other players' roles
+func (game *Game) MapAndSendRoles() {
+	toLiberals, toFascists := game.MapRoles()
 	pc := game.PlayerCount()
 	for _, player := range game.Players {
 		if player == nil {
 			continue
 		}
-		playersToLiberal[player.Name] = "unknown"
-		playersToFascists[player.Name] = player.Role
-	}
-
-	for _, player := range game.Players {
-		if player == nil {
-			continue
-		}
 		if player.Role == RoleLiberal || (pc > 6 && player.Role == RoleHitler) {
-			player.SendMessage(Start{Type: TypeStart, Role: player.Role, Players: playersToLiberal})
+			player.SendMessage(Start{Type: TypeStart, Role: player.Role, Players: toLiberals})
 		} else if player.Role == RoleFascist || (pc < 7 && player.Role == RoleHitler) {
-			player.SendMessage(Start{Type: TypeStart, Role: player.Role, Players: playersToFascists})
+			player.SendMessage(Start{Type: TypeStart, Role: player.Role, Players: toFascists})
 		}
 	}
-	game.BroadcastTable()
-	game.NextPresident()
 }
 
 // NextPresident moves the game to the next president
 func (game *Game) NextPresident() {
+	game.debugln("Moving to next president...")
 	if game.PlayersInGame() < 4 {
 		game.Error("Not enough players left")
 	}
@@ -108,6 +130,7 @@ func (game *Game) SetPresident(player *Player) {
 	game.State = ActPickChancellor
 	game.PreviousPresident = game.President
 	game.President = player
+	game.debugln(game.President.Name, "is now the president")
 	game.Broadcast(President{Type: TypePresident, Name: game.President.Name})
 }
 
@@ -118,6 +141,7 @@ func (game *Game) PickChancellor(name string) {
 		game.PreviousChancellor = game.Chancellor
 		game.Chancellor = p
 		game.State = ActVote
+		game.debugln(game.President.Name, "picked", game.Chancellor.Name, "as the chancellor")
 		game.Broadcast(StartVote{Type: TypeStartVote, President: game.President.Name, Chancellor: game.Chancellor.Name})
 	}
 }
@@ -126,6 +150,7 @@ func (game *Game) PickChancellor(name string) {
 func (game *Game) Vote(player *Player, vote string) {
 	player.Vote = ParseVote(vote)
 	player.SendMessage(VoteMessage{Type: TypeVote, Vote: player.Vote})
+	game.debugln(player.Name, "voted", player.Vote)
 
 	var ja, nein = 0, 0
 	for _, player := range game.Players {
@@ -159,6 +184,7 @@ func (game *Game) Vote(player *Player, vote string) {
 // GovernmentFailed is called when the government fails.
 func (game *Game) GovernmentFailed(veto bool) {
 	game.FailedGovs++
+	game.debugfln("The government has failed (#%d)", game.FailedGovs)
 	if game.FailedGovs >= 3 {
 		game.ThreeGovsFailed()
 	} else {
@@ -170,6 +196,7 @@ func (game *Game) GovernmentFailed(veto bool) {
 // ThreeGovsFailed is called when three consequent government attempts have been downvoted
 func (game *Game) ThreeGovsFailed() {
 	card := game.Cards.PickCard()
+	game.debugln("Three governments failed")
 	game.Broadcast(EnactForce{Type: TypeEnactForce, Policy: card})
 	game.Enact(card, true)
 }
@@ -183,7 +210,7 @@ func (game *Game) StartDiscard() {
 		}
 	}
 	game.State = ActDiscardPresident
-
+	game.debugln("Started card discarding with", game.President.Name, "and", game.Chancellor.Name)
 	game.FailedGovs = 0
 	game.Broadcast(Discard{Type: TypePresidentDiscard, Name: game.President.Name})
 	game.Discarding = game.Cards.PickCards()
@@ -198,16 +225,19 @@ func (game *Game) DiscardCard(c string) {
 	if err != nil || card >= len(game.Discarding) || card < 0 {
 		return
 	}
+	game.debugf("A %s card was discarded by the ", game.Discarding[card])
 	game.Cards.Discarded = append(game.Cards.Discarded, game.Discarding[card])
 	game.Discarding[card] = game.Discarding[len(game.Discarding)-1]
 	game.Discarding = game.Discarding[:len(game.Discarding)-1]
 
 	if len(game.Discarding) == 2 {
 		game.BroadcastTable()
+		game.debugNoPrefix("president\n")
 		game.Broadcast(Discard{Type: TypeChancellorDiscard, Name: game.Chancellor.Name})
 		game.Chancellor.SendMessage(CardsMessage{Type: TypeCards, Cards: game.Discarding})
 		game.State = ActDiscardChancellor
 	} else if len(game.Discarding) == 1 {
+		game.debugNoPrefix("chancellor\n")
 		game.Broadcast(Enact{Type: TypeEnact, President: game.President.Name, Chancellor: game.Chancellor.Name, Policy: game.Discarding[0]})
 		game.Enact(game.Discarding[0], false)
 	} else {
@@ -217,12 +247,14 @@ func (game *Game) DiscardCard(c string) {
 
 // VetoRequest is called when the chancellor wants to veto the current discard
 func (game *Game) VetoRequest() {
+	game.debugln(game.Chancellor.Name, "has made a veto request")
 	game.VetoRequested = true
 	game.Broadcast(Veto{Type: TypeVetoRequest, President: game.President.Name, Chancellor: game.Chancellor.Name})
 }
 
 // VetoAccept is called when the president accepts the chancellors veto request
 func (game *Game) VetoAccept() {
+	game.debugln(game.President.Name, "has accepted the veto request")
 	game.VetoRequested = false
 	game.Broadcast(Veto{Type: TypeVetoAccept, President: game.President.Name, Chancellor: game.Chancellor.Name})
 
@@ -243,6 +275,11 @@ func (game *Game) Enact(card Card, force bool) {
 	case CardLiberal:
 		game.Cards.TableLiberal++
 	}
+	if force {
+		game.debugln("Enacting", card, "by force")
+	} else {
+		game.debugln("Enacting", card, "by", game.President.Name, "and", game.Chancellor.Name)
+	}
 	game.BroadcastTable()
 	if game.Cards.TableFascist >= 6 {
 		game.End(CardFascist)
@@ -259,16 +296,21 @@ func (game *Game) Enact(card Card, force bool) {
 	act := game.GetSpecialAction()
 	switch act {
 	case ActPolicyPeek:
+		game.debugln(game.President.Name, "will now peek on the next three cards")
 		game.Broadcast(PresidentAction{Type: TypePeekBroadcast, President: game.President.Name})
 		game.President.SendMessage(CardsMessage{Type: TypePeek, Cards: game.Cards.Peek()})
 		game.NextPresident()
 	case ActInvestigatePlayer:
+		game.debugln(game.President.Name, "will now investigate a player")
 		game.Broadcast(PresidentAction{Type: TypeInvestigate, President: game.President.Name})
 	case ActSelectPresident:
+		game.debugln(game.President.Name, "will now select a president")
 		game.Broadcast(PresidentAction{Type: TypePresidentSelect, President: game.President.Name})
 	case ActExecution:
+		game.debugln(game.President.Name, "will now execute a player")
 		game.Broadcast(PresidentAction{Type: TypeExecute, President: game.President.Name})
 	case ActNothing:
+		game.debugln(game.President.Name, "will now do nothing")
 		game.NextPresident()
 		return
 	}
@@ -279,6 +321,7 @@ func (game *Game) Enact(card Card, force bool) {
 func (game *Game) Investigated(name string) {
 	p := game.GetPlayer(name)
 	if p != nil {
+		game.debugln(game.President.Name, "investigated", p.Name)
 		game.Broadcast(PresidentActionFinished{Type: TypeInvestigated, President: game.President.Name, Name: p.Name})
 		game.President.SendMessage(InvestigateResult{Type: TypeInvestigateResult, Name: p.Name, Result: p.Role.Card()})
 		game.NextPresident()
@@ -289,6 +332,7 @@ func (game *Game) Investigated(name string) {
 func (game *Game) SelectedPresident(name string) {
 	p := game.GetPlayer(name)
 	if p != nil && p.Alive && p != game.President {
+		game.debugln(game.President.Name, "selected", p.Name, "as the next president")
 		game.Broadcast(PresidentActionFinished{Type: TypePresidentSelected, President: game.President.Name, Name: p.Name})
 		game.SetPresident(p)
 	}
@@ -298,6 +342,7 @@ func (game *Game) SelectedPresident(name string) {
 func (game *Game) ExecutedPlayer(name string) {
 	p := game.GetPlayer(name)
 	if p != nil && p.Alive {
+		game.debugln(game.President.Name, "executed", p.Name)
 		game.Broadcast(PresidentActionFinished{Type: TypeExecuted, President: game.President.Name, Name: p.Name})
 		p.Alive = false
 		if p.Role == RoleHitler {
@@ -309,6 +354,7 @@ func (game *Game) ExecutedPlayer(name string) {
 }
 
 func (game *Game) Error(msg string) {
+	game.debugln("Error:", msg)
 	game.Broadcast(Error{Type: TypeError, Message: msg})
 	game.Ended = true
 	Remove(game.Name)
@@ -316,6 +362,7 @@ func (game *Game) Error(msg string) {
 
 // End the game with the given winner
 func (game *Game) End(winner Card) {
+	game.debugln(winner, "won")
 	var end = End{Type: TypeEnd, Winner: winner, Roles: make(map[string]Role)}
 	for _, player := range game.Players {
 		if player == nil {
