@@ -56,7 +56,9 @@ Messages that the server receives at the wrong time or from the wrong user are i
 * Type `start` - The game has started.
   * Field `role` - The secret role of the user.
   * Field `players` - A map of players and their roles. All roles will be. `unknown` if the client is liberal or the client is hitler and there are over 6 players.
-* Type `startvote` - The president has picked his/her chancellor and players msut vote.
+* Type `president` - The president is choosing a chancellor
+  * Field `name` - The name of the president.
+* Type `startvote` - The president has picked a chancellor and players must vote.
   * Field `president` - The name of the president.
   * Field `chancellor` - The name of the chancellor.
 * Type `governmentfailed` - The vote has failed.
