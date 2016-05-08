@@ -136,11 +136,21 @@ func (game *Game) SetPresident(player *Player) {
 	game.PreviousPresident = game.President
 	game.President = player
 	game.debugln(game.President.Name, "is now the president")
+	var unpickable = []string{game.President.Name}
 	if game.PlayerCount() == 5 {
-		game.Broadcast(President{Type: TypePresident, Name: game.President.Name, Unpickable: []string{game.PreviousPresident.Name}})
+		if game.PreviousPresident != nil {
+			unpickable = append(unpickable, game.PreviousPresident.Name)
+		}
 	} else {
-		game.Broadcast(President{Type: TypePresident, Name: game.President.Name, Unpickable: []string{game.PreviousPresident.Name, game.PreviousChancellor.Name}})
+		if game.PreviousPresident != nil && game.PreviousChancellor != nil {
+			unpickable = append(unpickable, game.PreviousPresident.Name, game.PreviousChancellor.Name)
+		} else if game.PreviousPresident != nil {
+			unpickable = append(unpickable, game.PreviousPresident.Name)
+		} else if game.PreviousChancellor != nil {
+			unpickable = append(unpickable, game.PreviousChancellor.Name)
+		}
 	}
+	game.Broadcast(President{Type: TypePresident, Name: game.President.Name, Unpickable: unpickable})
 }
 
 // PickChancellor is called when the president picks his/her chancellor
