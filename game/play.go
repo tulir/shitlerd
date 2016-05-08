@@ -134,12 +134,14 @@ func (game *Game) NextPresident() {
 func (game *Game) SetPresident(player *Player) {
 	game.State = ActPickChancellor
 	game.PreviousPresident = game.President
+	game.PreviousChancellor = game.Chancellor
+	game.Chancellor = nil
 	game.President = player
 	game.debugln(game.President.Name, "is now the president")
 	var unpickable = []string{game.President.Name}
 	if game.PlayerCount() == 5 {
-		if game.PreviousPresident != nil {
-			unpickable = append(unpickable, game.PreviousPresident.Name)
+		if game.PreviousChancellor != nil {
+			unpickable = append(unpickable, game.PreviousChancellor.Name)
 		}
 	} else {
 		if game.PreviousPresident != nil && game.PreviousChancellor != nil {
@@ -157,7 +159,6 @@ func (game *Game) SetPresident(player *Player) {
 func (game *Game) PickChancellor(name string) {
 	p := game.GetPlayer(name)
 	if p != nil && p.Alive && p != game.President && p != game.PreviousChancellor && (game.PlayerCount() == 5 || p != game.PreviousPresident) {
-		game.PreviousChancellor = game.Chancellor
 		game.Chancellor = p
 		game.State = ActVote
 		game.debugln(game.President.Name, "picked", game.Chancellor.Name, "as the chancellor")
