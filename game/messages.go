@@ -119,8 +119,9 @@ type Error struct {
 
 // President contains the necessary fields for a president selected announcement
 type President struct {
-	Type Type   `json:"type"`
-	Name string `json:"name"`
+	Type       Type     `json:"type"`
+	Name       string   `json:"name"`
+	Unpickable []string `json:"unpickable"`
 }
 
 // StartVote is sent to the clients when they should vote for president&chancellor

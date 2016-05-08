@@ -136,7 +136,11 @@ func (game *Game) SetPresident(player *Player) {
 	game.PreviousPresident = game.President
 	game.President = player
 	game.debugln(game.President.Name, "is now the president")
-	game.Broadcast(President{Type: TypePresident, Name: game.President.Name})
+	if game.PlayerCount() == 5 {
+		game.Broadcast(President{Type: TypePresident, Name: game.President.Name, Unpickable: []string{game.PreviousPresident.Name}})
+	} else {
+		game.Broadcast(President{Type: TypePresident, Name: game.President.Name, Unpickable: []string{game.PreviousPresident.Name, game.PreviousChancellor.Name}})
+	}
 }
 
 // PickChancellor is called when the president picks his/her chancellor
