@@ -1,6 +1,9 @@
 # Secret Hitler Server
 A server to handle online Secret Hitler games.
 
+## Compiling
+Install and set up [Go](https://golang.org/) and run `go get maunium.net/go/shitlerd`
+
 ## API
 ### Creating a game
 You can create a game by making a GET request to `/create`. This will simply return the name of the newly created game.
