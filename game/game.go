@@ -64,13 +64,13 @@ func (game *Game) Join(name, authtoken string, conn Connection) (int, *Player) {
 	}
 	for i, player := range game.Players {
 		if player == nil {
-			game.Broadcast(JoinQuit{Type: TypeJoin, Name: name})
+			game.Broadcast(JoinPart{Type: TypeJoin, Name: name})
 			game.Players[i] = &Player{Name: name, AuthToken: game.createAuthToken(), Connected: true, Alive: true, Vote: VoteEmpty, Conn: conn, Game: game}
 			game.debugln(game.Players[i].Name, "joined the game")
 			return i, game.Players[i]
 		} else if player.Name == name {
 			if player.AuthToken == authtoken {
-				player.Game.Broadcast(JoinQuit{Type: TypeConnected, Name: player.Name})
+				player.Game.Broadcast(JoinPart{Type: TypeConnected, Name: player.Name})
 				game.debugln(player.Name, "reconnected")
 				if player.Conn != nil {
 					player.SendMessage("connected-other")
@@ -116,7 +116,7 @@ func (game *Game) Leave(name string) {
 			} else {
 				game.Players[i].Alive = false
 			}
-			game.Broadcast(JoinQuit{Type: TypeQuit, Name: name})
+			game.Broadcast(JoinPart{Type: TypePart, Name: name})
 			game.debugln(player.Name, "left the game")
 		}
 	}
@@ -235,7 +235,7 @@ type Player struct {
 func (player *Player) Disconnect() {
 	player.Connected = false
 	player.Conn = nil
-	player.Game.Broadcast(JoinQuit{Type: TypeDisconnected, Name: player.Name})
+	player.Game.Broadcast(JoinPart{Type: TypeDisconnected, Name: player.Name})
 	player.Game.debugln(player.Name, "disconnected")
 }
 
@@ -254,7 +254,7 @@ func (player *Player) ReceiveMessage(msg map[string]string) {
 	} else if msg["type"] == TypeStart.String() && !game.Started && game.ConnectedPlayers() >= 5 {
 		game.debugln(player.Name, "requested the game to start")
 		game.Start()
-	} else if msg["type"] == TypeQuit.String() {
+	} else if msg["type"] == TypePart.String() {
 		game.Leave(player.Name)
 	} else if !game.Started || game.Ended || !player.Alive {
 		game.debugln(player.Name, "tried to send a", msg["type"], "message!")

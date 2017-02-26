@@ -53,7 +53,7 @@ func (typ Type) ReceiveRequirements(player *Player) bool {
 const (
 	TypeChat              Type = "chat"
 	TypeJoin              Type = "join"
-	TypeQuit              Type = "quit"
+	TypePart              Type = "part"
 	TypeConnected         Type = "connected"
 	TypeDisconnected      Type = "disconnected"
 	TypeStart             Type = "start"
@@ -91,8 +91,8 @@ type Chat struct {
 	Message string `json:"message"`
 }
 
-// JoinQuit contains the necessary fields for join and quit messages
-type JoinQuit struct {
+// JoinPart contains the necessary fields for join and part messages
+type JoinPart struct {
 	Type Type   `json:"type"`
 	Name string `json:"name"`
 }

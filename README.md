@@ -37,7 +37,7 @@ Messages that the server receives at the wrong time or from the wrong user are i
 #### Client -> server messages
 * Type `chat` - A chat message.
   * Field `message` - The message to send.
-* Type `quit` - The player has intentionally left the game.
+* Type `part` - The player has intentionally left the game.
 * Type `start` - Tell the server to start the game. Ignored if the game is already started or has less than 5 players.
 * Type `vote` - Vote for a president+chancellor combination. Ignored if the game isn't in a voting state.
   * Field `vote` - The vote value, `ja` or `nein`.
@@ -54,7 +54,7 @@ Messages that the server receives at the wrong time or from the wrong user are i
 * Type `chat` - A chat message.
   * Field `message` - The message.
   * Field `sender` - The name of the user who sent the message.
-* Type `join`, `quit` - A player joined or left the game.
+* Type `join`, `part` - A player joined or left the game.
   * Field `name` - The name of the player who joined or left the game.
 * Type `connected`, `disconnected` - A player connected or disconnected
   * Field `name` - The player who connected/disconnected.
