@@ -18,14 +18,22 @@
 package web
 
 import (
+	"flag"
 	"net/http"
 
 	"github.com/gorilla/context"
 	"maunium.net/go/shitlerd/game"
 )
 
+var trustOrigin = flag.Bool("trustOrigin", false, "Trust Origin headers for WebSockets")
+
 // Load the web server
 func Load(addr string) {
+	if *trustOrigin {
+		upgrader.CheckOrigin = func(r *http.Request) bool {
+			return true
+		}
+	}
 	http.HandleFunc("/create", create)
 	http.HandleFunc("/socket", serveWs)
 	err := http.ListenAndServe(addr, context.ClearHandler(http.DefaultServeMux))
