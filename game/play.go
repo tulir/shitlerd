@@ -18,6 +18,7 @@
 package game
 
 import (
+	"math/rand"
 	"strconv"
 )
 
@@ -51,34 +52,35 @@ func (game *Game) GiveRoles() {
 	game.debugln("  Fascists:", fascistsAvailable)
 	liberalsAvailable := game.Liberals()
 	game.debugln("  Liberals:", liberalsAvailable)
-	hitlerAvailable := true
 
+	// Create role array and fill it
+	availableRoles := make([]Role, fascistsAvailable+liberalsAvailable+1)
+	availableRoles[0] = RoleHitler
+	for i := 1; i < fascistsAvailable+1; i++ {
+		availableRoles[i] = RoleFascist
+	}
+	for i := fascistsAvailable + 1; i < liberalsAvailable+fascistsAvailable+1; i++ {
+		availableRoles[i] = RoleLiberal
+	}
+
+	// Shuffle role array
+	for i := range availableRoles {
+		j := rand.Intn(i + 1)
+		availableRoles[i], availableRoles[j] = availableRoles[j], availableRoles[i]
+	}
+
+	// Assign roles from array
 	for _, player := range game.Players {
 		if player == nil {
 			continue
 		}
-		var availableRoles []Role
-		if !hitlerAvailable && fascistsAvailable == 0 {
-			availableRoles = []Role{RoleLiberal}
-		} else if !hitlerAvailable {
-			availableRoles = []Role{RoleLiberal, RoleFascist}
-		} else if fascistsAvailable == 0 {
-			availableRoles = []Role{RoleLiberal, RoleHitler}
-		} else {
-			availableRoles = []Role{RoleLiberal, RoleFascist, RoleHitler}
-		}
 
-		player.Role = availableRoles[r.Intn(len(availableRoles))]
-		game.debugln("   ", player.Name, "is a", player.Role)
-
-		switch player.Role {
-		case RoleLiberal:
-			liberalsAvailable--
-		case RoleFascist:
-			fascistsAvailable--
-		case RoleHitler:
-			hitlerAvailable = false
-		}
+		// Randomize role index and assign it
+		roleIndex := r.Intn(len(availableRoles))
+		player.Role = availableRoles[roleIndex]
+		// Remove assigned role from available roles array
+		availableRoles[roleIndex] = availableRoles[len(availableRoles)-1]
+		availableRoles = availableRoles[:len(availableRoles)-1]
 	}
 }
 
