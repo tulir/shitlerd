@@ -18,6 +18,7 @@ package main
 import (
 	"flag"
 	"fmt"
+
 	_ "maunium.net/go/shitlerd/game"
 	"maunium.net/go/shitlerd/web"
 )

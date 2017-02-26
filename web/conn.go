@@ -21,10 +21,11 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/gorilla/websocket"
-	"maunium.net/go/shitlerd/game"
 	"net/http"
 	"time"
+
+	"github.com/gorilla/websocket"
+	"maunium.net/go/shitlerd/game"
 )
 
 var debug = flag.Bool("wsDebug", false, "Print WebSocket connection debug/log messages")

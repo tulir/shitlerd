@@ -18,9 +18,10 @@
 package web
 
 import (
+	"net/http"
+
 	"github.com/gorilla/context"
 	"maunium.net/go/shitlerd/game"
-	"net/http"
 )
 
 // Load the web server
