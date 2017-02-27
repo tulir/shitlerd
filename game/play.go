@@ -19,7 +19,6 @@ package game
 
 import (
 	"math/rand"
-	"strconv"
 )
 
 // Start the game already!
@@ -250,10 +249,9 @@ func (game *Game) StartDiscard() {
 }
 
 // DiscardCard is called when the chancellor or president discards a card
-func (game *Game) DiscardCard(c string) {
+func (game *Game) DiscardCard(card int) {
 	game.VetoRequested = false
-	card, err := strconv.Atoi(c)
-	if err != nil || card >= len(game.Discarding) || card < 0 {
+	if card >= len(game.Discarding) || card < 0 {
 		return
 	}
 	game.debugf("A %s card was discarded by the ", game.Discarding[card])

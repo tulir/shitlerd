@@ -31,9 +31,9 @@ import (
 var debug = flag.Bool("wsDebug", false, "Print WebSocket connection debug/log messages")
 
 const (
-	writeWait      = 10 * time.Second
-	pongWait       = 15 * time.Second
-	pingPeriod     = 10 * time.Second
+	writeWait      = 5 * time.Second
+	pongWait       = 10 * time.Second
+	pingPeriod     = 5 * time.Second
 	maxMessageSize = 1024
 )
 
@@ -66,7 +66,7 @@ func (c *connection) readPump() {
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseNormalClosure) {
 				fmt.Println("Unexpected close:", err)
-				if c.p != nil {
+				if c.p != nil && c.p.Conn == c {
 					c.p.Disconnect()
 					c.p = nil
 				}
@@ -74,7 +74,7 @@ func (c *connection) readPump() {
 			break
 		}
 
-		var data = make(map[string]string)
+		var data = make(map[string]interface{})
 		err = json.Unmarshal(message, &data)
 		if err != nil {
 			fmt.Println(err)
@@ -114,7 +114,7 @@ func (c *connection) writePump() {
 		case new, ok := <-c.ch:
 			if !ok {
 				c.write(websocket.CloseMessage, []byte{})
-				if c.p != nil {
+				if c.p != nil && c.p.Conn == c {
 					c.p.Disconnect()
 					c.p = nil
 				}
@@ -123,7 +123,7 @@ func (c *connection) writePump() {
 			err := c.writeJSON(new)
 			if err != nil {
 				fmt.Println("Disconnected:", err)
-				if c.p != nil {
+				if c.p != nil && c.p.Conn == c {
 					c.p.Disconnect()
 					c.p = nil
 				}
@@ -132,7 +132,7 @@ func (c *connection) writePump() {
 		case <-ticker.C:
 			err := c.write(websocket.PingMessage, []byte{})
 			if err != nil {
-				if c.p != nil {
+				if c.p != nil && c.p.Conn == c {
 					c.p.Disconnect()
 					c.p = nil
 				}
@@ -142,9 +142,9 @@ func (c *connection) writePump() {
 	}
 }
 
-func (c *connection) join(data map[string]string) (response map[string]interface{}) {
+func (c *connection) join(data map[string]interface{}) (response map[string]interface{}) {
 	response = make(map[string]interface{})
-	g, ok := game.Get(data["game"])
+	g, ok := game.Get(data["game"].(string))
 	if !ok || g == nil {
 		response["success"] = false
 		response["message"] = "gamenotfound"
@@ -154,29 +154,16 @@ func (c *connection) join(data map[string]string) (response map[string]interface
 	}
 
 	response["game"] = g.Name
-	authtoken, _ := data["authtoken"]
+	authtoken, _ := data["authtoken"].(string)
 
-	state, p := g.Join(data["name"], authtoken, c)
+	state, p := g.Join(data["name"].(string), authtoken, c)
 	if p != nil {
 		response["name"] = p.Name
 	} else {
 		response["name"] = data["name"]
 	}
 
-	switch state {
-	case -1:
-		response["success"] = false
-		response["message"] = "full"
-	case -2:
-		response["success"] = false
-		response["message"] = "nameused"
-	case -3:
-		response["success"] = false
-		response["message"] = "gamestarted"
-	case -4:
-		response["success"] = false
-		response["message"] = "invalidname"
-	default:
+	if _, isInt := state.(int); isInt {
 		c.p = p
 		response["success"] = true
 		response["authtoken"] = p.AuthToken
@@ -187,6 +174,21 @@ func (c *connection) join(data map[string]string) (response map[string]interface
 			}
 		}
 		response["players"] = players
+		response["started"] = g.Started
+		if g.Started {
+			response["table"] = g.GetTable()
+			response["role"] = p.Role
+			toLiberals, toFascists := g.MapRoles()
+			pc := g.PlayerCount()
+			if p.Role == game.RoleLiberal || (pc > 6 && p.Role == game.RoleHitler) {
+				response["players"] = toLiberals
+			} else if p.Role == game.RoleFascist || (pc < 7 && p.Role == game.RoleHitler) {
+				response["players"] = toFascists
+			}
+		}
+	} else {
+		response["success"] = false
+		response["message"] = state
 	}
 	return
 }
@@ -199,7 +201,6 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 	}
 
 	c := &connection{ws: ws, ch: make(chan interface{})}
-
 	c.ws.SetReadLimit(maxMessageSize)
 	c.ws.SetReadDeadline(time.Now().Add(pongWait))
 	c.ws.SetPongHandler(func(string) error { c.ws.SetReadDeadline(time.Now().Add(pongWait)); return nil })

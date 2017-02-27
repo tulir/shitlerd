@@ -56,11 +56,28 @@ func CreateGame(name string) *Game {
 }
 
 // Join the given player
-func (game *Game) Join(name, authtoken string, conn Connection) (int, *Player) {
+func (game *Game) Join(name, authtoken string, conn Connection) (interface{}, *Player) {
 	if game.Started && len(authtoken) == 0 {
-		return -3, nil
+		return "gamestarted", nil
 	} else if !validName(name) {
-		return -4, nil
+		return "invalidname", nil
+	}
+	for i, player := range game.Players {
+		if player != nil && player.Name == name {
+			if player.AuthToken != authtoken {
+				return "nameused", nil
+			}
+			player.Game.Broadcast(JoinPart{Type: TypeConnected, Name: player.Name})
+			game.debugln(player.Name, "reconnected")
+			oldConn := player.Conn
+			player.Conn = conn
+			player.Connected = true
+			if oldConn != nil {
+				oldConn.SendMessage("connected-other")
+				oldConn.Close()
+			}
+			return i, player
+		}
 	}
 	for i, player := range game.Players {
 		if player == nil {
@@ -68,22 +85,9 @@ func (game *Game) Join(name, authtoken string, conn Connection) (int, *Player) {
 			game.Players[i] = &Player{Name: name, AuthToken: game.createAuthToken(), Connected: true, Alive: true, Vote: VoteEmpty, Conn: conn, Game: game}
 			game.debugln(game.Players[i].Name, "joined the game")
 			return i, game.Players[i]
-		} else if player.Name == name {
-			if player.AuthToken == authtoken {
-				player.Game.Broadcast(JoinPart{Type: TypeConnected, Name: player.Name})
-				game.debugln(player.Name, "reconnected")
-				if player.Conn != nil {
-					player.SendMessage("connected-other")
-					player.Conn.Close()
-				}
-				player.Conn = conn
-				player.Connected = true
-				return i, player
-			}
-			return -2, nil
 		}
 	}
-	return -1, nil
+	return "full", nil
 }
 
 func validName(name string) bool {
@@ -210,13 +214,18 @@ func (game *Game) Broadcast(msg interface{}) {
 
 // BroadcastTable broadcasts the current status of the table to everyone
 func (game *Game) BroadcastTable() {
-	game.Broadcast(Table{
+	game.Broadcast(game.GetTable())
+}
+
+// GetTable creates and returns a Table object from the current state
+func (game *Game) GetTable() Table {
+	return Table{
 		Type:         TypeTable,
 		Deck:         len(game.Cards.Deck),
 		Discarded:    len(game.Cards.Discarded),
 		TableLiberal: game.Cards.TableLiberal,
 		TableFascist: game.Cards.TableFascist,
-	})
+	}
 }
 
 // Player is a single player in a single Secret Hitler game
@@ -247,10 +256,10 @@ func (player *Player) SendMessage(msg interface{}) {
 }
 
 // ReceiveMessage should be called by the connection when the client sends a message
-func (player *Player) ReceiveMessage(msg map[string]string) {
+func (player *Player) ReceiveMessage(msg map[string]interface{}) {
 	game := player.Game
 	if msg["type"] == TypeChat.String() && player.Alive {
-		game.Broadcast(Chat{Type: TypeChat, Sender: player.Name, Message: msg["message"]})
+		game.Broadcast(Chat{Type: TypeChat, Sender: player.Name, Message: msg["message"].(string)})
 	} else if msg["type"] == TypeStart.String() && !game.Started && game.ConnectedPlayers() >= 5 {
 		game.debugln(player.Name, "requested the game to start")
 		game.Start()
@@ -268,24 +277,24 @@ func (player *Player) ReceiveMessage(msg map[string]string) {
 }
 
 // ReceiveGameMessage is called from ReceiveMessage when the received message is directly related to the ongoing game.
-func (player *Player) ReceiveGameMessage(msg map[string]string) {
+func (player *Player) ReceiveGameMessage(msg map[string]interface{}) {
 	game := player.Game
 	if msg["type"] == TypeVote.String() && TypeVote.ReceiveRequirements(player) {
-		game.Vote(player, msg["vote"])
+		game.Vote(player, msg["vote"].(string))
 	} else if msg["type"] == TypePickChancellor.String() && TypePickChancellor.ReceiveRequirements(player) {
-		game.PickChancellor(msg["name"])
+		game.PickChancellor(msg["name"].(string))
 	} else if msg["type"] == TypeDiscard.String() && TypeDiscard.ReceiveRequirements(player) {
-		game.DiscardCard(msg["index"])
+		game.DiscardCard(int(msg["index"].(float64)))
 	} else if msg["type"] == TypeVetoRequest.String() && TypeVetoRequest.ReceiveRequirements(player) {
 		game.VetoRequest()
 	} else if msg["type"] == TypeVetoAccept.String() && TypeVetoAccept.ReceiveRequirements(player) {
 		game.VetoAccept()
 	} else if msg["type"] == TypePresidentSelect.String() && TypePresidentSelect.ReceiveRequirements(player) {
-		game.SelectedPresident(msg["name"])
+		game.SelectedPresident(msg["name"].(string))
 	} else if msg["type"] == TypeExecute.String() && TypeExecute.ReceiveRequirements(player) {
-		game.ExecutedPlayer(msg["name"])
+		game.ExecutedPlayer(msg["name"].(string))
 	} else if msg["type"] == TypeInvestigate.String() && TypeInvestigate.ReceiveRequirements(player) {
-		game.Investigated(msg["name"])
+		game.Investigated(msg["name"].(string))
 	}
 }
 
